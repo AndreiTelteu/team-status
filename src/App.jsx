@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Confetti from 'react-confetti';
 import MyStatusView from './components/MyStatusView';
 import StatusTableView from './components/StatusTableView';
@@ -12,8 +12,23 @@ import './App.css';
 const LOCAL_STORAGE_USER_ID_KEY = 'teamStatusApp_selectedUserId';
 const CONFETTI_STORAGE_KEY_PREFIX = 'confettiLastShown_';
 
+const hashToView = {
+  '#my-status': 'myStatus',
+  '#status-table': 'statusTable',
+  '#employees': 'manageEmployees'
+};
+const viewToHash = {
+  'myStatus': '#my-status',
+  'statusTable': '#status-table',
+  'manageEmployees': '#employees'
+};
+
 function App() {
-  const [view, setView] = useState('myStatus');
+  // Initialize view based on URL hash or default to 'myStatus'
+  const [view, setView] = useState(() => {
+    const hash = window.location.hash;
+    return hashToView[hash] || 'myStatus';
+  });
   const [statuses, setStatuses] = useState({}); // { userId: { date: statusText } }
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +65,24 @@ function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // --- URL Hash Effect ---
+  useEffect(() => {
+    // Update hash when view changes
+    window.history.replaceState(null, '', viewToHash[view] || '');
+    
+    // Listen for hash changes
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      const newView = hashToView[hash];
+      if (newView && newView !== view) {
+        setView(newView);
+      }
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [view, viewToHash, hashToView]);
 
   // --- Initial Data Loading Effect ---
   useEffect(() => {
@@ -213,18 +246,18 @@ function App() {
         />
       )}
 
-       <header className="app-header">
-           <h1>Daily Status Update</h1>
-           <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-               {isConnected ? '● Connected' : '○ Disconnected'}
-           </div>
-       </header>
+      <header className="app-header">
+        <h1>Daily Status Update</h1>
+        <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+          {isConnected ? '● Connected' : '○ Disconnected'}
+        </div>
+      </header>
 
       <nav>
         {/* Navigation Buttons */}
-         <button onClick={() => setView('myStatus')} disabled={view === 'myStatus'} className={view === 'myStatus' ? 'active' : ''}>My Status</button>
-         <button onClick={() => setView('statusTable')} disabled={view === 'statusTable'} className={view === 'statusTable' ? 'active' : ''}>Status Table</button>
-         <button onClick={() => setView('manageEmployees')} disabled={view === 'manageEmployees'} className={view === 'manageEmployees' ? 'active' : ''}>Manage Employees</button>
+        <button onClick={() => setView('myStatus')} disabled={view === 'myStatus'} className={view === 'myStatus' ? 'active' : ''}>My Status</button>
+        <button onClick={() => setView('statusTable')} disabled={view === 'statusTable'} className={view === 'statusTable' ? 'active' : ''}>Status Table</button>
+        <button onClick={() => setView('manageEmployees')} disabled={view === 'manageEmployees'} className={view === 'manageEmployees' ? 'active' : ''}>Manage Employees</button>
       </nav>
 
       <main>
@@ -255,7 +288,11 @@ function App() {
               </>
             )}
             {view === 'statusTable' && (
-              <StatusTableView statuses={statuses} employees={employees} />
+              <StatusTableView
+                statuses={statuses}
+                employees={employees}
+                selectedUserId={selectedUserId}
+              />
             )}
             {view === 'manageEmployees' && (
               <ManageEmployeesView

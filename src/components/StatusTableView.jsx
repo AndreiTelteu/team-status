@@ -2,7 +2,7 @@ import React from 'react';
 import StatusTable from './StatusTable';
 import { getPastDates } from '../utils/dateUtils';
 
-function StatusTableView({ statuses, employees }) {
+function StatusTableView({ statuses, employees, selectedUserId }) {
   // Ensure employees is always an array to prevent errors during loading/initial state
   const validEmployees = Array.isArray(employees) ? employees : [];
   const dates = getPastDates(5); // Today + past 4 days
@@ -15,7 +15,7 @@ function StatusTableView({ statuses, employees }) {
        ) : Object.keys(statuses).length === 0 ? (
             <p>Waiting for status updates...</p>
        ) : (
-           <StatusTable statuses={statuses} employees={validEmployees} dates={dates} />
+           <StatusTable statuses={statuses} employees={validEmployees} dates={dates} selectedUserId={selectedUserId} />
        )}
     </div>
   );

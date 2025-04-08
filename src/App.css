@@ -208,6 +208,10 @@ main {
   text-align: center;
 }
 
+.status-table tr.selected {
+  border: 2px solid #3498db;
+}
+
 /* Manage Employees View */
 .manage-employees-view ul {
   list-style: none;

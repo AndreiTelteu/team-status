@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { getTodayDateString } from '../utils/dateUtils';
 
-function StatusTable({ statuses, employees, dates }) {
+function StatusTable({ statuses, employees, dates, selectedUserId }) {
   const todayDateString = getTodayDateString();
   // Ensure employees is an array
   const validEmployees = Array.isArray(employees) ? employees : [];
@@ -19,7 +19,7 @@ function StatusTable({ statuses, employees, dates }) {
         </thead>
         <tbody>
           {validEmployees.map(employee => (
-            <tr key={employee.id}>
+            <tr key={employee.id} className={selectedUserId === employee.id ? 'selected' : ''}>
               <td 
                 className={`employee-name ${
                   typeof statuses[employee.id]?.[todayDateString] === 'string' && 
