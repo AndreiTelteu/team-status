@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 
 function StatusTable({ statuses, employees, dates }) {
   // Ensure employees is an array
@@ -29,7 +29,7 @@ function StatusTable({ statuses, employees, dates }) {
                     key={`${employee.id}-${date}`}
                     className={`status-cell ${!hasStatus ? 'no-status' : ''}`}
                   >
-                    {hasStatus ? statusText : '-'}
+                    {hasStatus ? parseStatusText(statusText) : '-'}
                   </td>
                 );
               })}
@@ -39,6 +39,40 @@ function StatusTable({ statuses, employees, dates }) {
       </table>
     </div>
   );
+}
+
+// Helper function to parse status text and make text inside star marks bold
+function parseStatusText(text) {
+  if (!text.includes('*')) {
+    return text;
+  }
+
+  const parts = text.split('*');
+  const result = [];
+  
+  // If the text starts with a star, the first element will be an empty string
+  // and the first actual content should be bold
+  let isBold = text.startsWith('*');
+  
+  parts.forEach((part, index) => {
+    if (part === '') {
+      // Skip empty parts, but toggle the bold state if we encounter consecutive stars
+      if (index > 0 && index < parts.length - 1) {
+        isBold = !isBold;
+      }
+      return;
+    }
+    
+    result.push(
+      <Fragment key={index}>
+        {isBold ? <strong>{part}</strong> : part}
+      </Fragment>
+    );
+    
+    isBold = !isBold;
+  });
+  
+  return result;
 }
 
 export default StatusTable;
