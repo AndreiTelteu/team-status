@@ -1,157 +1,160 @@
 // @ts-check
 import { Database } from "bun:sqlite";
 
-const DB_FILE = "status_app.sqlite";
-export const db = new Database(DB_FILE, { create: true });
-
-console.log(`Using database file: ${DB_FILE}`);
-
-// Enable WAL mode for better concurrency
-db.exec("PRAGMA journal_mode = WAL;");
+// --- Database Setup ---
+const db = new Database("status_app.sqlite", { create: true });
+console.log("Initialized SQLite database.");
 
 // Create tables if they don't exist
-db.exec(`
+db.run(`
   CREATE TABLE IF NOT EXISTS employees (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
   );
 `);
-
-db.exec(`
+db.run(`
   CREATE TABLE IF NOT EXISTS statuses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     employee_id TEXT NOT NULL,
-    date TEXT NOT NULL, -- Format YYYY-MM-DD
-    status_text TEXT NOT NULL,
-    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
-    UNIQUE (employee_id, date) -- Ensure only one status per employee per day
+    status_date TEXT NOT NULL, -- YYYY-MM-DD
+    status_text TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id),
+    UNIQUE (employee_id, status_date) -- Ensure only one status per employee per day
   );
 `);
 
-// --- Employee Functions ---
+console.log("Database tables checked/created.");
 
-/**
- * Gets all employees from the database.
- * @returns {Array<{id: string, name: string}>}
- */
+// --- In-Memory Cache for Live Updates ---
+// Structure: { userId: { date: statusText, ... }, ... }
+let liveStatuses = {};
+
+// Function to load initial statuses into memory
+function loadInitialStatuses() {
+  try {
+    const query = db.query(`
+      SELECT employee_id, status_date, status_text
+      FROM statuses
+      ORDER BY timestamp DESC;
+    `);
+    const results = query.all();
+    const loadedStatuses = {};
+    results.forEach(row => {
+      if (!loadedStatuses[row.employee_id]) {
+        loadedStatuses[row.employee_id] = {};
+      }
+      // Only store the latest status if multiple exist for the same day (shouldn't happen with UNIQUE constraint)
+      if (!loadedStatuses[row.employee_id][row.status_date]) {
+         loadedStatuses[row.employee_id][row.status_date] = row.status_text;
+      }
+    });
+    liveStatuses = loadedStatuses;
+    console.log("Initial statuses loaded into memory.");
+    // console.log("Initial liveStatuses:", JSON.stringify(liveStatuses, null, 2));
+  } catch (error) {
+    console.error("Error loading initial statuses:", error);
+    liveStatuses = {}; // Start with empty if loading fails
+  }
+}
+
+// Load statuses when the module starts
+loadInitialStatuses();
+
+
+// --- Employee Functions ---
 export function getAllEmployees() {
   try {
-    return db.query("SELECT id, name FROM employees ORDER BY name;").all();
-  } catch (err) {
-    console.error("Error fetching employees:", err);
+    const query = db.query("SELECT id, name FROM employees ORDER BY name;");
+    return query.all();
+  } catch (error) {
+    console.error("Error fetching employees:", error);
     return [];
   }
 }
 
-/**
- * Adds a new employee to the database.
- * @param {string} name
- * @returns {{id: string, name: string} | null} The new employee or null if error/duplicate.
- */
 export function addEmployeeDB(name) {
-  const trimmedName = name.trim();
-  if (!trimmedName) return null;
-
-  const newId = `emp${Date.now()}`; // Simple unique ID
   try {
-    // Check if name already exists (case-insensitive check might be better in real app)
-    const existing = db.query("SELECT id FROM employees WHERE name = ?;").get(trimmedName);
-    if (existing) {
-      console.warn(`Employee with name "${trimmedName}" already exists.`);
-      return null; // Or return the existing employee? For now, return null.
+    // Simple ID generation (consider UUIDs for production)
+    const id = `emp${Date.now()}${Math.floor(Math.random() * 100)}`;
+    const query = db.query("INSERT INTO employees (id, name) VALUES (?, ?) RETURNING id, name;");
+    const newEmployee = query.get(id, name);
+    console.log("Added employee:", newEmployee);
+    return newEmployee;
+  } catch (error) {
+    // Check for UNIQUE constraint violation
+    if (error.message.includes("UNIQUE constraint failed: employees.name")) {
+        console.warn(`Attempted to add duplicate employee name: ${name}`);
+        return null; // Indicate duplicate
     }
-
-    db.query("INSERT INTO employees (id, name) VALUES (?, ?);").run(newId, trimmedName);
-    console.log("Employee added to DB:", { id: newId, name: trimmedName });
-    return { id: newId, name: trimmedName };
-  } catch (err) {
-    console.error("Error adding employee:", err);
-    return null;
+    console.error("Error adding employee:", error);
+    return null; // Indicate general error
   }
 }
 
 // --- Status Functions ---
 
-/**
- * Gets all statuses, formatted for the frontend.
- * @returns {Record<string, Record<string, string>>} Object like { empId: { date: status } }
- */
+// Gets all statuses directly from the in-memory cache
 export function getAllStatuses() {
+  // Return a deep copy to prevent accidental modification? For now, return direct reference.
+  return liveStatuses;
+}
+
+// Gets specific status from in-memory cache
+export function getStatusesForUserAndDate(userId, date) {
+    return liveStatuses[userId]?.[date] || ''; // Return empty string if not found
+}
+
+
+// Saves status to DB AND updates the in-memory cache
+// Modified for live updates: Primarily updates cache, then persists to DB.
+export function saveStatusDB(userId, date, statusText) {
+  // 1. Update In-Memory Cache Immediately
+  if (!liveStatuses[userId]) {
+    liveStatuses[userId] = {};
+  }
+  liveStatuses[userId][date] = statusText;
+  // console.log(`Updated liveStatuses for ${userId} on ${date}:`, statusText);
+
+  // 2. Persist to Database (Upsert logic)
   try {
-    const rows = db.query("SELECT employee_id, date, status_text FROM statuses;").all();
-    const formattedStatuses = {};
-    for (const row of rows) {
-      if (!formattedStatuses[row.employee_id]) {
-        formattedStatuses[row.employee_id] = {};
-      }
-      formattedStatuses[row.employee_id][row.date] = row.status_text;
-    }
-    return formattedStatuses;
-  } catch (err) {
-    console.error("Error fetching statuses:", err);
-    return {};
+    const query = db.query(`
+      INSERT INTO statuses (employee_id, status_date, status_text)
+      VALUES (?, ?, ?)
+      ON CONFLICT(employee_id, status_date) DO UPDATE SET
+        status_text = excluded.status_text,
+        timestamp = CURRENT_TIMESTAMP;
+    `);
+    query.run(userId, date, statusText);
+    // console.log(`Persisted status for ${userId} on ${date} to DB.`);
+    return true; // Indicate success
+  } catch (error) {
+    console.error(`Error saving status to DB for ${userId} on ${date}:`, error);
+    // Should we revert the in-memory change? Maybe not for live updates.
+    // Log the error, the in-memory version is already updated and broadcasted.
+    return false; // Indicate persistence failure
   }
 }
 
-/**
- * Saves or updates a status for a given employee and date.
- * Deletes the status if statusText is empty.
- * @param {string} employeeId
- * @param {string} date - Format YYYY-MM-DD
- * @param {string} statusText
- * @returns {boolean} True on success, false on failure.
- */
-export function saveStatusDB(employeeId, date, statusText) {
-  try {
-    const trimmedStatus = statusText.trim();
-    if (trimmedStatus === '') {
-      // Delete the status entry if the text is empty
-      db.query("DELETE FROM statuses WHERE employee_id = ? AND date = ?;")
-        .run(employeeId, date);
-      console.log(`Status deleted for ${employeeId} on ${date}`);
-    } else {
-      // Insert or replace the status entry
-      // ON CONFLICT handles the UNIQUE constraint (employee_id, date)
-      db.query(`
-        INSERT INTO statuses (employee_id, date, status_text)
-        VALUES (?, ?, ?)
-        ON CONFLICT(employee_id, date) DO UPDATE SET
-          status_text = excluded.status_text;
-      `).run(employeeId, date, trimmedStatus);
-      console.log(`Status saved/updated for ${employeeId} on ${date}`);
-    }
-    return true;
-  } catch (err) {
-    console.error("Error saving status:", err);
-    return false;
-  }
-}
-
-// --- Initial Data (Optional - only if DB is empty) ---
-function initializeDatabaseIfNeeded() {
-    const employeeCount = db.query("SELECT COUNT(*) as count FROM employees;").get()?.count ?? 0;
-    if (employeeCount === 0) {
-        console.log("Database empty, adding initial employees...");
-        const initialEmployees = [
-            { id: 'emp1', name: 'Alice' },
-            { id: 'emp2', name: 'Bob' },
-            { id: 'emp3', name: 'Charlie' },
-        ];
-        const insertEmployee = db.prepare("INSERT INTO employees (id, name) VALUES (?, ?)");
-        const insertManyEmployees = db.transaction(employees => {
-            for (const emp of employees) insertEmployee.run(emp.id, emp.name);
-        });
-
-        try {
-            insertManyEmployees(initialEmployees);
-            console.log("Initial employees added.");
-        } catch (err) {
-            console.error("Error adding initial employees:", err);
+// Example: Ensure default users exist if DB is empty
+function ensureDefaultUsers() {
+    const employees = getAllEmployees();
+    if (employees.length === 0) {
+        console.log("No employees found, adding default users 'Alice' and 'Bob'.");
+        addEmployeeDB("Alice"); // Will get ID like emp<timestamp>0
+        addEmployeeDB("Bob");   // Will get ID like emp<timestamp>1
+        // NOTE: The CURRENT_USER_ID in App.jsx needs to match one of these generated IDs
+        // or be updated after the first run. For simplicity, we might hardcode IDs
+        // if this becomes too complex for the demo. Let's stick with dynamic for now.
+        // Re-fetch to log the generated IDs
+        const currentEmployees = getAllEmployees();
+        console.log("Current employees after adding defaults:", currentEmployees);
+        if (currentEmployees.length > 0) {
+            console.warn(`\n----\nPlease update CURRENT_USER_ID in src/App.jsx to one of the generated IDs above (e.g., '${currentEmployees[0].id}') to use the 'My Status' view correctly.\n----\n`);
         }
     } else {
-        console.log("Database already contains employees.");
+         // console.log("Existing employees found:", employees);
     }
 }
 
-// Run initialization check when the module loads
-initializeDatabaseIfNeeded();
+ensureDefaultUsers();

@@ -1,288 +1,256 @@
-/* General App Styling */
+/* General App Styles */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: sans-serif;
   margin: 0;
-  background-color: #f8f9fa; /* Lighter background */
-  color: #343a40; /* Darker text */
+  background-color: #f4f7f6;
+  color: #333;
 }
 
 .app-container {
-  max-width: 1100px; /* Slightly wider */
-  margin: 30px auto; /* More top/bottom margin */
-  padding: 30px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-h1, h2, h3 {
-  color: #212529; /* Slightly darker headings */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
 }
 
 h1 {
+  color: #2c3e50;
   text-align: center;
-  margin-bottom: 35px;
-  border-bottom: 1px solid #dee2e6; /* Lighter border */
-  padding-bottom: 15px;
-  font-weight: 600;
+  margin: 0; /* Reset margin if needed */
 }
 
-h2 {
-  margin-bottom: 20px;
-  font-weight: 500;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 8px;
+/* Connection Status Indicator */
+.connection-status {
+    font-size: 0.9em;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+}
+.connection-status.connected {
+    color: #2ecc71; /* Green */
+    background-color: #e8f8f0;
+}
+.connection-status.disconnected {
+    color: #e74c3c; /* Red */
+    background-color: #fdedec;
 }
 
-h3 {
-  margin-top: 25px;
-  margin-bottom: 15px;
-  font-weight: 500;
-  color: #495057;
-}
 
-/* Navigation Tabs */
 nav {
   display: flex;
   justify-content: center;
-  margin-bottom: 35px;
-  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
   padding-bottom: 15px;
 }
 
 nav button {
-  padding: 10px 25px; /* More padding */
-  margin: 0 8px; /* Slightly less margin */
-  font-size: 1rem;
-  font-weight: 500;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 10px 20px;
+  margin: 0 5px;
   cursor: pointer;
-  border: 1px solid #ced4da; /* Default border */
-  border-radius: 6px;
-  background-color: #f8f9fa; /* Light background */
-  color: #495057; /* Grey text */
-  transition: all 0.2s ease-in-out;
+  border-radius: 4px;
+  font-size: 1em;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 nav button:hover {
-  background-color: #e9ecef; /* Slightly darker hover */
-  border-color: #adb5bd;
-  color: #212529;
+  background-color: #e9ecef;
 }
 
 nav button:disabled,
 nav button.active {
-  background-color: #007bff; /* Bootstrap primary blue */
+  background-color: #3498db;
   color: white;
-  border-color: #007bff;
+  border-color: #3498db;
   cursor: default;
 }
 
-/* Main Content Area */
 main {
-  margin-top: 25px;
+  margin-top: 20px;
 }
 
-/* --- MyStatusView Specific --- */
-.my-status-view {
-  /* Container for the view */
+/* My Status View */
+.my-status-view h2,
+.status-table-view h2,
+.manage-employees-view h2 {
+    color: #34495e;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ecf0f1;
+    padding-bottom: 10px;
 }
 
-.my-status-view h2 {
-  /* Specific styling if needed */
+.my-status-view p {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-bottom: 15px;
 }
 
-.my-status-view .past-statuses {
-  margin-top: 30px;
-}
 
-.my-status-view .past-statuses h3 {
-  border-bottom: none; /* Remove border if not needed here */
-  margin-bottom: 10px;
+/* Status Input - Live Version */
+.status-input-live {
+    margin-bottom: 20px;
 }
-
-.my-status-view .status-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.my-status-view .status-list li {
-  background-color: #f8f9fa;
-  padding: 12px 15px;
-  border: 1px solid #e9ecef;
-  border-radius: 5px;
-  margin-bottom: 8px;
-  font-size: 0.95rem;
-}
-
-.my-status-view .status-list li strong {
-  color: #007bff; /* Blue for date */
-  margin-right: 8px;
-}
-
-.my-status-view .status-list li i {
-  color: #6c757d; /* Grey for placeholder */
-}
-
-/* --- StatusInput Component --- */
-.status-input-form {
-  padding: 20px;
-  background-color: #e9ecef; /* Light grey background */
-  border-radius: 8px;
-  margin-bottom: 30px;
-}
-
-.status-input-form label {
+.status-input-live label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
-  color: #495057;
+  font-weight: bold;
+  color: #555;
 }
-
-.status-input-form textarea {
-  width: calc(100% - 24px); /* Full width minus padding */
-  min-height: 90px;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  font-size: 1rem;
-  margin-bottom: 15px;
-  resize: vertical; /* Allow vertical resize */
-  line-height: 1.5;
+.status-input-live textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Include padding in width */
+  font-size: 1em;
+  min-height: 80px; /* Ensure decent height */
 }
-
-.status-input-form button {
-  padding: 10px 20px;
-  background-color: #28a745; /* Bootstrap success green */
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.status-input-form button:hover {
-  background-color: #218838; /* Darker green */
+.live-update-notice {
+    font-size: 0.8em;
+    color: #95a5a6;
+    margin-top: 5px;
+    text-align: right;
 }
 
 
-/* --- Status Table View --- */
-.table-container {
-  overflow-x: auto;
-  margin-top: 20px;
-  border: 1px solid #dee2e6;
-  border-radius: 8px; /* Rounded corners for the container */
+/* Past Statuses List */
+.past-statuses {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px dashed #eee;
+}
+.past-statuses h3 {
+    color: #34495e;
+    margin-bottom: 10px;
+}
+.status-list {
+  list-style: none;
+  padding: 0;
+}
+.status-list li {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+.status-list li strong {
+  color: #555;
+}
+.status-list li i {
+  color: #aaa;
+}
+
+
+/* Status Table View & Table */
+.status-table-container {
+  overflow-x: auto; /* Allow horizontal scrolling on small screens */
 }
 
 .status-table {
   width: 100%;
   border-collapse: collapse;
-  /* Removed border here, added to container */
+  margin-top: 15px;
+  font-size: 0.9em;
 }
 
 .status-table th,
 .status-table td {
-  border: 1px solid #dee2e6; /* Lighter borders */
-  padding: 12px 15px; /* More padding */
+  border: 1px solid #ddd;
+  padding: 10px 12px;
   text-align: left;
-  vertical-align: top;
-  min-width: 120px; /* Slightly larger min-width */
-  font-size: 0.95rem; /* Slightly smaller font */
+  vertical-align: top; /* Align content to the top */
 }
 
 .status-table th {
-  background-color: #f8f9fa; /* Lighter header */
-  font-weight: 600; /* Bolder header */
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  color: #495057;
+  background-color: #ecf0f1;
+  color: #34495e;
+  font-weight: bold;
+  white-space: nowrap; /* Prevent date headers from wrapping */
 }
 
-.status-table tbody tr:nth-child(even) {
-  background-color: #fdfdfe; /* Very subtle striping */
+.status-table td.employee-name {
+  font-weight: bold;
+  background-color: #f8f9fa;
+  white-space: nowrap;
 }
 
-.status-table tbody tr:hover {
-  background-color: #e9ecef; /* Hover effect */
+.status-table td.status-cell {
+  /* Allow text wrapping within the cell */
+  white-space: pre-wrap; /* Preserve whitespace and wrap */
+  word-break: break-word; /* Break long words */
+  min-width: 150px; /* Minimum width for status cells */
 }
 
-.status-table td i {
-  color: #adb5bd; /* Lighter placeholder */
-  font-style: normal;
+.status-table td.no-status {
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
 }
 
-/* --- Manage Employees View --- */
-.manage-employees-view section {
-  margin-bottom: 30px;
-  padding: 20px;
-  background-color: #f8f9fa; /* Consistent light background */
-  border: 1px solid #e9ecef; /* Consistent border */
-  border-radius: 8px;
-}
-
-.manage-employees-view h3 {
-  margin-top: 0;
-  border-bottom: 1px solid #dee2e6;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
-
-.manage-employees-view .add-employee-form label {
-  display: inline-block;
-  margin-right: 10px;
-  margin-bottom: 8px;
-  font-weight: 500;
-  vertical-align: middle; /* Align label with input */
-}
-
-.manage-employees-view .add-employee-form input[type="text"] {
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  margin-right: 10px;
-  min-width: 250px; /* Wider input */
-  font-size: 1rem;
-  vertical-align: middle; /* Align input */
-}
-
-.manage-employees-view .add-employee-form button {
-  padding: 10px 20px;
-  background-color: #007bff; /* Primary blue */
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s ease-in-out;
-  vertical-align: middle; /* Align button */
-}
-
-.manage-employees-view .add-employee-form button:hover {
-  background-color: #0056b3; /* Darker blue */
-}
-
-.manage-employees-view .employee-list {
+/* Manage Employees View */
+.manage-employees-view ul {
   list-style: none;
   padding: 0;
+  margin-bottom: 20px;
 }
-
-.manage-employees-view .employee-list li {
-  padding: 10px 0;
-  border-bottom: 1px dashed #dee2e6; /* Lighter dashed border */
-  font-size: 0.95rem;
+.manage-employees-view li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
 }
-
-.manage-employees-view .employee-list li:last-child {
+.manage-employees-view li:last-child {
   border-bottom: none;
 }
 
-.manage-employees-view .employee-list li strong {
-  color: #495057; /* Darker grey for ID */
-  margin-left: 5px;
-  font-weight: normal;
-  font-size: 0.9em;
+.add-employee-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  align-items: center;
+}
+.add-employee-form label {
+    font-weight: bold;
+    margin-right: 5px; /* Spacing */
+}
+.add-employee-form input[type="text"] {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+}
+.add-employee-form button {
+  padding: 10px 15px;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+.add-employee-form button:hover {
+  background-color: #27ae60;
+}
+
+/* Loading Indicator */
+div[role="status"] { /* Style the loading div if needed */
+    text-align: center;
+    padding: 40px;
+    font-size: 1.2em;
+    color: #7f8c8d;
 }

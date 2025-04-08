@@ -1,29 +1,38 @@
 import React from 'react';
 
 function StatusTable({ statuses, employees, dates }) {
-  // Ensure dates are sorted chronologically (newest first, which getPastDates provides)
-  const sortedDates = [...dates].sort((a, b) => new Date(b) - new Date(a)); // Sort descending (newest first)
+  // Ensure employees is an array
+  const validEmployees = Array.isArray(employees) ? employees : [];
 
   return (
-    <div className="table-container">
+    <div className="status-table-container">
       <table className="status-table">
         <thead>
           <tr>
-            <th>Date</th>
-            {employees.map(emp => (
-              <th key={emp.id}>{emp.name}</th>
+            <th>Employee</th>
+            {dates.map(date => (
+              <th key={date}>{date}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {sortedDates.map(date => (
-            <tr key={date}>
-              <td><strong>{date}</strong></td>
-              {employees.map(emp => (
-                <td key={`${date}-${emp.id}`}>
-                  {statuses[emp.id]?.[date] || <i>-</i>}
-                </td>
-              ))}
+          {validEmployees.map(employee => (
+            <tr key={employee.id}>
+              <td className="employee-name">{employee.name}</td>
+              {dates.map(date => {
+                // Get status text safely, checking if user and date exist
+                const statusText = statuses[employee.id]?.[date];
+                const hasStatus = typeof statusText === 'string' && statusText !== ''; // Check if status exists and is not empty
+
+                return (
+                  <td
+                    key={`${employee.id}-${date}`}
+                    className={`status-cell ${!hasStatus ? 'no-status' : ''}`}
+                  >
+                    {hasStatus ? statusText : '-'}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
