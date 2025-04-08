@@ -155,16 +155,13 @@ function ensureDefaultUsers() {
           'Cristina',
           'Madalina',
         ];
-        for (const name in seedEmployees) {
+        for (const name of seedEmployees) {
           addEmployeeDB(name);
         }
         const currentEmployees = getAllEmployees();
         console.log("Current employees after adding defaults:", currentEmployees);
-        if (currentEmployees.length > 0) {
-            console.warn(`\n----\nPlease update CURRENT_USER_ID in src/App.jsx to one of the generated IDs above (e.g., '${currentEmployees[0].id}') to use the 'My Status' view correctly.\n----\n`);
-        }
     } else {
-         // console.log("Existing employees found:", employees);
+         console.log("Existing employees found:", employees);
     }
 }
 
