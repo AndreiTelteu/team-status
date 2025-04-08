@@ -149,11 +149,11 @@ const server = Bun.serve({
         const messageString = typeof message === 'string' ? message : Buffer.from(message).toString('utf-8');
         const data = JSON.parse(messageString);
 
-        if (data.type === 'typing') {
+        if (data.type === 'typing' || data.type === 'status_update') {
           const { userId, date, statusText } = data.payload;
           if (!userId || !date || typeof statusText === 'undefined' || typeof userId !== 'string' || typeof date !== 'string' || typeof statusText !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            console.error("Invalid typing message received:", data.payload);
-            ws.send(JSON.stringify({ type: 'error', message: 'Invalid typing data or format' }));
+            console.error("Invalid status update message received:", data.payload);
+            ws.send(JSON.stringify({ type: 'error', message: 'Invalid status update data or format' }));
             return;
           }
 
