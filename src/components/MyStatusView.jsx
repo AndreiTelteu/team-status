@@ -3,7 +3,7 @@ import StatusInput from './StatusInput';
 import { getPastDates } from '../utils/dateUtils';
 
 // Changed onSubmit to onStatusChange to reflect live updates
-function MyStatusView({ userId, userName, statuses, onStatusChange }) {
+function MyStatusView({ userId, userName, statuses, onStatusChange, onLogout }) {
   const today = new Date().toISOString().split('T')[0];
   const pastDates = getPastDates(5); // Get past 5 days + today
 
@@ -11,7 +11,10 @@ function MyStatusView({ userId, userName, statuses, onStatusChange }) {
 
   return (
     <div className="my-status-view">
-      <h2>My Status - {userName} (ID: {userId})</h2>
+      <h2>
+        My Status - {userName}
+        <small className='logout'><a href="#" onClick={onLogout}>Logout</a></small>
+      </h2>
       <p>Your changes are saved and broadcast live as you type.</p>
 
       <StatusInput
@@ -26,9 +29,9 @@ function MyStatusView({ userId, userName, statuses, onStatusChange }) {
         <ul className="status-list">
           {pastDates.slice(1).map(date => ( // Exclude today from this list
             <li key={date}>
-              <strong>{date}:</strong>
+              <strong>{date}:</strong>&nbsp;&nbsp;
               {/* Display status from the main statuses object */}
-              {statuses[userId]?.[date] ? statuses[userId][date] : <i>No status entered</i>}
+              {userStatuses?.[date] ? userStatuses[date] : <i>No status entered</i>}
             </li>
           ))}
         </ul>
@@ -38,3 +41,48 @@ function MyStatusView({ userId, userName, statuses, onStatusChange }) {
 }
 
 export default MyStatusView;
+
+
+// import React from 'react';
+// import StatusInput from './StatusInput';
+// import { getPastDates } from '../utils/dateUtils';
+
+// // Changed onSubmit to onStatusChange to reflect live updates
+// // Removed hardcoded userId and userName, now passed as props
+// function MyStatusView({ userId, userName, statuses, onStatusChange }) {
+//   const today = new Date().toISOString().split('T')[0];
+//   const pastDates = getPastDates(5); // Get past 5 days + today
+
+//   // Get statuses for the *selected* user from the global statuses object
+//   const userStatuses = statuses[userId] || {};
+
+//   return (
+//     <div className="my-status-view">
+//       {/* User info is now handled by UserSelector in App.jsx */}
+//       {/* <h2>My Status - {userName} (ID: {userId})</h2> */}
+//       <p>Your changes are saved and broadcast live as you type.</p>
+
+//       <StatusInput
+//         userId={userId} // Pass the selected userId
+//         today={today}
+//         onStatusChange={onStatusChange} // Pass the live update handler
+//         initialStatus={userStatuses[today]} // Get today's status for initial value
+//       />
+
+//       <div className="past-statuses">
+//         <h3>Past 5 Days</h3>
+//         <ul className="status-list">
+//           {pastDates.slice(1).map(date => ( // Exclude today from this list
+//             <li key={date}>
+//               <strong>{date}:</strong>&nbsp;
+//               {/* Display status from the main statuses object for the selected user */}
+//               {userStatuses[date] ? userStatuses[date] : <i>No status entered</i>}
+//             </li>
+//           ))}
+//         </ul>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default MyStatusView;

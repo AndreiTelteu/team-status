@@ -82,6 +82,12 @@ main {
   margin-top: 20px;
 }
 
+.logout a, .logout a:visited, .logout a:active, .logout a:hover {
+  font-size: 14px;
+  color: #ccc;
+  margin-left: 20px;
+}
+
 /* My Status View */
 .my-status-view h2,
 .status-table-view h2,
