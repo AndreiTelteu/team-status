@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const API_BASE_URL = 'http://localhost:3000/api';
-const WS_BASE_URL = 'ws://localhost:3000/ws'; // WebSocket URL
+const API_BASE_URL = '/api';
+const WS_BASE_URL = '/ws'; // WebSocket URL
 
 // --- API Fetch Functions ---
 

@@ -1,10 +1,11 @@
+name: statusuri_team
 services:
   app:
     build: .
     ports:
-      - "3000:3000" # Map host port 3000 to container port 3000
+      - "3526:3000" # Map host port 3000 to container port 3000
     volumes:
       # Mount the SQLite database file from the host into the container
       # This ensures data persistence across container restarts.
       # The path inside the container matches where db.js expects it.
-      - ./status_app.sqlite:/app/backend/status_app.sqlite
+      - ./status_app.sqlite:/app/status_app.sqlite

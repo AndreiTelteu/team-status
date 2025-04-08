@@ -4,7 +4,6 @@ import MyStatusView from './components/MyStatusView';
 import StatusTableView from './components/StatusTableView';
 import ManageEmployeesView from './components/ManageEmployeesView';
 import UserSelector from './components/UserSelector';
-// Import WebSocket hooks/functions and API functions
 import { getEmployees, addEmployee, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
 import './App.css';
 
@@ -60,9 +59,6 @@ function App() {
         const fetchedEmployees = await getEmployees() || []; // Ensure it's an array
         setEmployees(fetchedEmployees);
         
-        const initialStatuses = await getStatuses();
-        setStatuses(initialStatuses || {});
-        
         // If we have a selected user ID, find their name
         if (selectedUserId) {
           const user = fetchedEmployees?.find(emp => emp.id === selectedUserId);
@@ -86,7 +82,6 @@ function App() {
     loadData();
   }, []); // Run only on mount
 
-  // --- WebSocket Message Handling ---
   const handleWebSocketMessage = useCallback((message) => {
     // console.log("App received WS message:", message);
     if (message.type === 'all_statuses') {
@@ -161,7 +156,7 @@ function App() {
     sendWsTypingUpdate(userId, date, statusText);
 
     // 2. Check conditions for triggering confetti (only for the current user)
-    if (userId === CURRENT_USER_ID) {
+    if (userId === selectedUserId) {
       const today = new Date().toISOString().split('T')[0];
       if (date === today && statusText.trim() !== '') { // Check if it's for today and not empty
         const storageKey = `${CONFETTI_STORAGE_KEY_PREFIX}${userId}`;
@@ -176,7 +171,7 @@ function App() {
         }
       }
     }
-  }, [triggerConfetti]); // Dependency: triggerConfetti (which is also memoized)
+  }, [triggerConfetti, selectedUserId]);
 
   // Memoize handleAddEmployee
   const handleAddEmployee = useCallback(async (employeeName) => {

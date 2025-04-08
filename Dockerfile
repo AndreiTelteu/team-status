@@ -8,6 +8,7 @@ RUN bun install --frozen-lockfile
 
 # Copy the rest of the application code
 COPY . .
+RUN rm -fv status_app.sqlite
 
 # Build the frontend (output will be in /app/dist)
 RUN bun run build

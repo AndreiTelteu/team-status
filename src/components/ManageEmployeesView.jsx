@@ -42,8 +42,8 @@ function ManageEmployeesView({ employees, onAddEmployee }) {
           <ul className="employee-list"> {/* Added class */}
             {employees.map(emp => (
               <li key={emp.id}>
-                {emp.name}
-                <strong>(ID: {emp.id})</strong> {/* Wrapped ID for potential styling */}
+                <small>ID: {emp.id}</small>
+                &nbsp;|&nbsp;{emp.name}
               </li>
             ))}
           </ul>

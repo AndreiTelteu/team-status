@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import debounce from 'lodash.debounce';
+import throttle from 'lodash.throttle';
 
-// Changed onSubmit to onStatusChange, removed form and button
 function StatusInput({ userId, today, onStatusChange, initialStatus }) {
-  // Use state for the input value
   const [statusText, setStatusText] = useState(initialStatus || '');
-  // Ref to track if the initial status has been set to avoid sending it immediately
   const initialStatusRef = useRef(initialStatus);
-  // Ref to store the memoized onStatusChange to use inside debounce without dependency issues
   const onStatusChangeRef = useRef(onStatusChange);
+  const mainEditor = useRef(false);
 
-  // Update the ref if the onStatusChange prop changes
   useEffect(() => {
     onStatusChangeRef.current = onStatusChange;
   }, [onStatusChange]);
@@ -19,17 +15,16 @@ function StatusInput({ userId, today, onStatusChange, initialStatus }) {
   // This prevents resetting the input while the user is typing if the parent re-renders
   useEffect(() => {
     // Check if the prop is different from the current state AND different from the last known initial value
-    if (initialStatus !== statusText && initialStatus !== initialStatusRef.current) {
+    if (initialStatusRef.current !== initialStatus && mainEditor.current == false) {
         // console.log(`StatusInput (${userId}, ${today}): initialStatus prop changed to:`, initialStatus);
         setStatusText(initialStatus || '');
         initialStatusRef.current = initialStatus; // Update ref to the new initial value
     }
   }, [initialStatus, userId, today, statusText]); // Include statusText here
 
-  // Debounced function using the ref for the callback
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSendUpdate = useCallback(
-    debounce((text) => {
+    throttle((text) => {
       // console.log(`Debounced: Sending update for ${userId} on ${today}:`, text);
       // Call the function from the ref
       if (onStatusChangeRef.current) {
@@ -39,7 +34,6 @@ function StatusInput({ userId, today, onStatusChange, initialStatus }) {
     [userId, today] // Dependencies: only userId and today, as the callback is now from a ref
   );
 
-  // Effect to trigger the debounced function when statusText changes
   useEffect(() => {
     // Only send update if the text has actually changed from the initial state received via props
     // This prevents sending the initial value on mount
@@ -58,6 +52,7 @@ function StatusInput({ userId, today, onStatusChange, initialStatus }) {
   }, [statusText, debouncedSendUpdate]);
 
   const handleChange = (e) => {
+    mainEditor.current = true;
     setStatusText(e.target.value);
   };
 
