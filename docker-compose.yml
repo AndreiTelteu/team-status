@@ -9,3 +9,5 @@ services:
       # This ensures data persistence across container restarts.
       # The path inside the container matches where db.js expects it.
       - ./status_app.sqlite:/app/status_app.sqlite
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro

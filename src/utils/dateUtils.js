@@ -10,7 +10,7 @@ export function getPastDates(days) {
   for (let i = 0; i <= days; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
-    dates.push(date.toISOString().split('T')[0]);
+    dates.push(format(date));
   }
   // Sort dates chronologically (newest first) before returning
   return dates.sort((a, b) => new Date(b) - new Date(a));
@@ -21,5 +21,18 @@ export function getPastDates(days) {
  * @returns {string}
  */
 export function getTodayDateString() {
-  return new Date().toISOString().split('T')[0];
+  const date = new Date();
+  return format(date);
+}
+
+/**
+ * Format: YYYY-MM-DD
+ * @returns {string}
+ */
+export function format(date) {
+  return [
+    date.toLocaleString("en-US", { year:"numeric" }),
+    date.toLocaleString("en-US", { month:"2-digit" }),
+    date.toLocaleString("en-US", { day:"2-digit" }),
+  ].join("-");
 }
