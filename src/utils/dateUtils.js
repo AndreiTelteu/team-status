@@ -31,8 +31,8 @@ export function getTodayDateString() {
  */
 export function format(date) {
   return [
-    date.toLocaleString("en-US", { year:"numeric" }),
-    date.toLocaleString("en-US", { month:"2-digit" }),
-    date.toLocaleString("en-US", { day:"2-digit" }),
-  ].join("-");
+    date.toLocaleString('en-US', { year: 'numeric' }),
+    date.toLocaleString('en-US', { month: '2-digit' }),
+    date.toLocaleString('en-US', { day: '2-digit' }),
+  ].join('-');
 }
