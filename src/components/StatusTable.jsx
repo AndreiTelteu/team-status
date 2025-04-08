@@ -1,6 +1,8 @@
 import React, { Fragment } from 'react';
+import { getTodayDateString } from '../utils/dateUtils';
 
 function StatusTable({ statuses, employees, dates }) {
+  const todayDateString = getTodayDateString();
   // Ensure employees is an array
   const validEmployees = Array.isArray(employees) ? employees : [];
 
@@ -18,7 +20,22 @@ function StatusTable({ statuses, employees, dates }) {
         <tbody>
           {validEmployees.map(employee => (
             <tr key={employee.id}>
-              <td className="employee-name">{employee.name}</td>
+              <td 
+                className={`employee-name ${
+                  typeof statuses[employee.id]?.[todayDateString] === 'string' && 
+                  statuses[employee.id]?.[todayDateString] !== '' 
+                    ? 'status-complete' 
+                    : 'status-incomplete'
+                }`}
+                style={{
+                  backgroundColor: typeof statuses[employee.id]?.[todayDateString] === 'string' && 
+                                  statuses[employee.id]?.[todayDateString] !== '' 
+                                    ? '#d4edda' // green background
+                                    : '#f8d7da'  // red background
+                }}
+              >
+                {employee.name}
+              </td>
               {dates.map(date => {
                 // Get status text safely, checking if user and date exist
                 const statusText = statuses[employee.id]?.[date];
