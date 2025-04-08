@@ -20,9 +20,9 @@ function UserSelector({ selectedUserId, onUserSelect }) {
           if (selectedEmp) {
             setSelectedUserName(selectedEmp.name);
           } else {
-             // If selectedUserId from localStorage is invalid, clear it
-             onUserSelect(null, null); // Notify parent to clear
-             setSelectedUserName('Select User');
+            // If selectedUserId from localStorage is invalid, clear it
+            onUserSelect(null, null); // Notify parent to clear
+            setSelectedUserName('Select User');
           }
         } else {
             setSelectedUserName('Select User');
@@ -85,7 +85,7 @@ function UserSelector({ selectedUserId, onUserSelect }) {
             {filteredEmployees.length > 0 ? (
               filteredEmployees.map(employee => (
                 <li key={employee.id} onClick={() => handleSelect(employee)}>
-                  {employee.name} (ID: {employee.id})
+                  {employee.name}
                 </li>
               ))
             ) : (

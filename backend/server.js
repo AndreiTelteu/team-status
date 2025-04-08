@@ -1,12 +1,20 @@
 // @ts-check
 import { getAllEmployees, addEmployeeDB, getAllStatuses, saveStatusDB, getStatusesForUserAndDate } from "./db";
+import { existsSync } from "node:fs"; // Use Node's existsSync
+import path from "node:path"; // Use Node's path module
 
 const PORT = 3000;
 const API_PREFIX = "/api";
 const WS_PATH = "/ws"; // Define a path for WebSocket connections
 const WS_TOPIC = "status-updates"; // Topic for broadcasting status changes
+const STATIC_DIR = path.join(import.meta.dir, "../dist"); // Path to the Vite build output
+const INDEX_HTML = path.join(STATIC_DIR, "index.html");
 
-console.log("Starting Bun server with WebSocket support...");
+console.log("Starting Bun server with WebSocket and static file support...");
+console.log(`Serving static files from: ${STATIC_DIR}`);
+console.log(`API prefix: ${API_PREFIX}`);
+console.log(`WebSocket path: ${WS_PATH}`);
+
 
 // Store connected WebSocket clients (Bun handles this internally via topics)
 // const clients = new Set(); // No longer needed with Bun's publish/subscribe
@@ -15,30 +23,26 @@ const server = Bun.serve({
   port: PORT,
   async fetch(req, server) {
     const url = new URL(req.url);
-    const path = url.pathname;
+    let reqPath = url.pathname;
     const method = req.method;
 
     // --- WebSocket Upgrade ---
-    // Check if the request is for the WebSocket endpoint and upgrade
-    if (path === WS_PATH) {
+    if (reqPath === WS_PATH) {
       const success = server.upgrade(req);
       if (success) {
-        // Bun automatically handles the response for successful upgrades.
         console.log("WebSocket connection upgraded.");
-        return; // Return undefined to let Bun handle the response
+        return; // Bun handles the response
       } else {
-        // Upgrade failed
         return new Response("WebSocket upgrade failed", { status: 400 });
       }
     }
 
-
-    // --- CORS Preflight Handling ---
-    if (method === "OPTIONS") {
+    // --- CORS Preflight Handling (for API routes) ---
+    if (method === "OPTIONS" && reqPath.startsWith(API_PREFIX)) {
       return new Response(null, {
         status: 204, // No Content
         headers: {
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin": "*", // Be more specific in production
           "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization",
           "Access-Control-Max-Age": "86400",
@@ -46,15 +50,13 @@ const server = Bun.serve({
       });
     }
 
-    // --- CORS Headers for Actual Requests ---
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Content-Type": "application/json",
-    };
-
     // --- API Routing ---
-    if (path.startsWith(API_PREFIX)) {
-      const route = path.substring(API_PREFIX.length);
+    if (reqPath.startsWith(API_PREFIX)) {
+      const route = reqPath.substring(API_PREFIX.length);
+      const corsHeaders = {
+        "Access-Control-Allow-Origin": "*", // Be more specific in production
+        "Content-Type": "application/json",
+      };
 
       // --- Employees API ---
       if (route === "/employees") {
@@ -63,8 +65,7 @@ const server = Bun.serve({
           return new Response(JSON.stringify(employees), { headers: corsHeaders });
         }
         if (method === "POST") {
-          // ... (keep existing POST /employees logic)
-           try {
+          try {
             const body = await req.json();
             const name = body?.name;
             if (!name || typeof name !== 'string') {
@@ -72,7 +73,6 @@ const server = Bun.serve({
             }
             const newEmployee = addEmployeeDB(name);
             if (newEmployee) {
-              // Broadcast updated employees list? Optional.
               return new Response(JSON.stringify(newEmployee), { status: 201, headers: corsHeaders });
             } else {
               return new Response(JSON.stringify({ error: "Failed to add employee (maybe duplicate?)" }), { status: 409, headers: corsHeaders });
@@ -84,78 +84,89 @@ const server = Bun.serve({
         }
       }
 
-      // --- Statuses API (GET only, POST is handled via WebSocket now) ---
+      // --- Statuses API (GET only) ---
       if (route === "/statuses") {
         if (method === "GET") {
           const statuses = getAllStatuses();
           return new Response(JSON.stringify(statuses), { headers: corsHeaders });
         }
-         // POST /statuses is removed - updates happen via WebSocket
-         if (method === "POST") {
-             return new Response(JSON.stringify({ error: "Status updates are now handled via WebSocket connection at /ws" }), { status: 405, headers: corsHeaders }); // 405 Method Not Allowed
-         }
+        if (method === "POST") {
+            return new Response(JSON.stringify({ error: "Status updates are handled via WebSocket (/ws)" }), { status: 405, headers: corsHeaders });
+        }
       }
+
+      // --- Fallback for unhandled API routes ---
+      console.log(`API route not found: ${reqPath}`);
+      return new Response(JSON.stringify({ error: "API Not Found" }), { status: 404, headers: corsHeaders });
     }
 
-    // --- Fallback for unhandled routes ---
-    return new Response(JSON.stringify({ error: "Not Found" }), { status: 404, headers: corsHeaders });
-  },
+    // --- Static File Serving ---
+    // Normalize path: remove leading '/' for joining, handle root
+    const requestedFile = reqPath === '/' ? 'index.html' : reqPath.substring(1);
+    const filePath = path.join(STATIC_DIR, requestedFile);
+
+    // Security: Prevent directory traversal
+    if (!filePath.startsWith(STATIC_DIR)) {
+        console.warn(`Attempted directory traversal: ${reqPath}`);
+        return new Response("Forbidden", { status: 403 });
+    }
+
+    // Check if the file exists
+    if (existsSync(filePath)) {
+        // console.log(`Serving static file: ${filePath}`);
+        const file = Bun.file(filePath);
+        // Bun.file automatically sets Content-Type based on extension
+        return new Response(file);
+    }
+
+    // --- Fallback to index.html for potential client-side routing ---
+    // If the file doesn't exist, but it's not an API/WS request,
+    // assume it might be a client-side route and serve index.html.
+    // Check if index.html exists first.
+    if (existsSync(INDEX_HTML)) {
+        // console.log(`File not found (${filePath}), serving index.html for client-side routing.`);
+        const file = Bun.file(INDEX_HTML);
+        return new Response(file, { headers: { "Content-Type": "text/html" } });
+    }
+
+    // --- Final 404 Not Found ---
+    console.log(`Resource not found: ${reqPath}`);
+    return new Response("Not Found", { status: 404 });
+
+  }, // End of fetch handler
 
   // --- WebSocket Handler ---
   websocket: {
-    // Called when a client connects
     open(ws) {
       console.log("WebSocket client connected");
-      ws.subscribe(WS_TOPIC); // Subscribe the client to the status updates topic
-       // Send current statuses to the newly connected client
-       const currentStatuses = getAllStatuses();
-       ws.send(JSON.stringify({ type: 'all_statuses', payload: currentStatuses }));
+      ws.subscribe(WS_TOPIC);
+      const currentStatuses = getAllStatuses();
+      ws.send(JSON.stringify({ type: 'all_statuses', payload: currentStatuses }));
     },
-
-    // Called when a message is received from a client
     message(ws, message) {
-      console.log("Received message:", message);
+      // console.log("Received message:", message); // Can be noisy
       try {
-        // Ensure message is a string before parsing
         const messageString = typeof message === 'string' ? message : Buffer.from(message).toString('utf-8');
         const data = JSON.parse(messageString);
 
-        // Handle 'typing' updates
         if (data.type === 'typing') {
           const { userId, date, statusText } = data.payload;
-
-          // Basic validation
-          if (!userId || !date || typeof statusText === 'undefined') {
+          if (!userId || !date || typeof statusText === 'undefined' || typeof userId !== 'string' || typeof date !== 'string' || typeof statusText !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             console.error("Invalid typing message received:", data.payload);
-            ws.send(JSON.stringify({ type: 'error', message: 'Invalid typing data' }));
+            ws.send(JSON.stringify({ type: 'error', message: 'Invalid typing data or format' }));
             return;
           }
-           if (typeof userId !== 'string' || typeof date !== 'string' || typeof statusText !== 'string') {
-               console.error("Invalid typing message types:", data.payload);
-               ws.send(JSON.stringify({ type: 'error', message: 'Invalid data types for typing update' }));
-               return;
-           }
-           if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-               console.error("Invalid date format:", date);
-               ws.send(JSON.stringify({ type: 'error', message: 'Invalid date format. Use YYYY-MM-DD.' }));
-               return;
-           }
 
-
-          // Update the status in the database/memory
-          const success = saveStatusDB(userId, date, statusText); // saveStatusDB now updates in-memory
-
+          const success = saveStatusDB(userId, date, statusText);
           if (success) {
-            // Broadcast the *specific* update to all subscribed clients
             const updatePayload = { userId, date, statusText };
             server.publish(
               WS_TOPIC,
               JSON.stringify({ type: 'status_update', payload: updatePayload })
             );
-            // console.log("Published status update:", updatePayload);
           } else {
-             console.error("Failed to save status update via WebSocket");
-             ws.send(JSON.stringify({ type: 'error', message: 'Failed to save status update on server' }));
+            console.error("Failed to save status update via WebSocket");
+            ws.send(JSON.stringify({ type: 'error', message: 'Failed to save status update on server' }));
           }
         } else {
             console.warn("Received unknown WebSocket message type:", data.type);
@@ -165,18 +176,14 @@ const server = Bun.serve({
         ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format or server error' }));
       }
     },
-
-    // Called when a client disconnects
     close(ws, code, message) {
       console.log("WebSocket client disconnected:", code, message);
-      ws.unsubscribe(WS_TOPIC); // Unsubscribe from the topic
+      ws.unsubscribe(WS_TOPIC);
     },
-
-    // Handle backpressure (optional but good practice)
     drain(ws) {
       // console.log("WebSocket backpressure relieved");
     },
-  },
+  }, // End of websocket handler
 
   error(error) {
     console.error("Server error:", error);
@@ -188,4 +195,5 @@ const server = Bun.serve({
 });
 
 console.log(`Bun server listening on http://localhost:${PORT}`);
-console.log(`WebSocket endpoint available at ws://localhost:${PORT}${WS_PATH}`);
+console.log(`API endpoint: http://localhost:${PORT}${API_PREFIX}`);
+console.log(`WebSocket endpoint: ws://localhost:${PORT}${WS_PATH}`);
