@@ -140,13 +140,24 @@ export function saveStatusDB(userId, date, statusText) {
 function ensureDefaultUsers() {
     const employees = getAllEmployees();
     if (employees.length === 0) {
-        console.log("No employees found, adding default users 'Alice' and 'Bob'.");
-        addEmployeeDB("Alice"); // Will get ID like emp<timestamp>0
-        addEmployeeDB("Bob");   // Will get ID like emp<timestamp>1
-        // NOTE: The CURRENT_USER_ID in App.jsx needs to match one of these generated IDs
-        // or be updated after the first run. For simplicity, we might hardcode IDs
-        // if this becomes too complex for the demo. Let's stick with dynamic for now.
-        // Re-fetch to log the generated IDs
+        let seedEmployees = [
+          'Andrei',
+          'Nocs',
+          'Dragos',
+          'Carmen',
+          'Florin',
+          'Timi',
+          'Catalin',
+          'Dorin',
+          'Vasi',
+          'Ioana',
+          'Alex',
+          'Cristina',
+          'Madalina',
+        ];
+        for (const name in seedEmployees) {
+          addEmployeeDB(name);
+        }
         const currentEmployees = getAllEmployees();
         console.log("Current employees after adding defaults:", currentEmployees);
         if (currentEmployees.length > 0) {
