@@ -6,11 +6,17 @@
 export function getPastDates(days) {
   const dates = [];
   const today = new Date();
+  let count = 0;
+  let i = 0;
 
-  for (let i = 0; i <= days; i++) {
+  while (count <= days) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
-    dates.push(format(date));
+    if (date.getDay() !== 0 && date.getDay() !== 6) { // 0 = Sunday, 6 = Saturday
+      dates.push(format(date));
+      count++;
+    }
+    i++;
   }
   // Sort dates chronologically (newest first) before returning
   return dates.sort((a, b) => new Date(b) - new Date(a));

@@ -3,8 +3,9 @@ import Confetti from 'react-confetti';
 import MyStatusView from './components/MyStatusView';
 import StatusTableView from './components/StatusTableView';
 import ManageEmployeesView from './components/ManageEmployeesView';
+import ManageLeavePeriodsView from './components/ManageLeavePeriodsView';
 import UserSelector from './components/UserSelector';
-import { getEmployees, addEmployee, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
+import { getEmployees, addEmployee, getLeavePeriods, addLeavePeriod, updateLeavePeriod, deleteLeavePeriod, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
 import './App.css';
 import { getTodayDateString } from './utils/dateUtils';
 
@@ -16,12 +17,14 @@ const CONFETTI_STORAGE_KEY_PREFIX = 'confettiLastShown_';
 const hashToView = {
   '#my-status': 'myStatus',
   '#status-table': 'statusTable',
-  '#employees': 'manageEmployees'
+  '#employees': 'manageEmployees',
+  '#vacations': 'manageLeavePeriods',
 };
 const viewToHash = {
   'myStatus': '#my-status',
   'statusTable': '#status-table',
-  'manageEmployees': '#employees'
+  'manageEmployees': '#employees',
+  'manageLeavePeriods': '#vacations',
 };
 
 function App() {
@@ -32,6 +35,7 @@ function App() {
   });
   const [statuses, setStatuses] = useState({}); // { userId: { date: statusText } }
   const [employees, setEmployees] = useState([]);
+  const [leavePeriods, setLeavePeriods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(
@@ -90,8 +94,13 @@ function App() {
     async function loadData() {
       setIsLoading(true);
       try {
+        // Load employees
         const fetchedEmployees = await getEmployees() || []; // Ensure it's an array
         setEmployees(fetchedEmployees);
+        
+        // Load leave periods
+        const fetchedLeavePeriods = await getLeavePeriods() || [];
+        setLeavePeriods(fetchedLeavePeriods);
         
         // If we have a selected user ID, find their name
         if (selectedUserId) {
@@ -107,7 +116,7 @@ function App() {
         }
 
       } catch (error) {
-        console.error("Error loading initial employee data:", error);
+        console.error("Error loading initial data:", error);
       } finally {
         // Don't set isLoading false here, wait for WS connection and initial statuses
         // setIsLoading(false);
@@ -229,6 +238,59 @@ function App() {
     }
   }, []); // No dependencies needed
 
+  // Memoize handleAddLeavePeriod
+  const handleAddLeavePeriod = useCallback(async (newLeavePeriod) => {
+    setIsLoading(true);
+    try {
+      const addedLeavePeriod = await addLeavePeriod(newLeavePeriod);
+      if (addedLeavePeriod) {
+        const updatedLeavePeriods = await getLeavePeriods() || [];
+        setLeavePeriods(updatedLeavePeriods);
+        alert(`Leave period added successfully! ID: ${addedLeavePeriod.id}`);
+      } else {
+        alert('Failed to add leave period.');
+      }
+    } catch (error) {
+      console.error("Error adding leave period:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Memoize handleEditLeavePeriod
+  const handleEditLeavePeriod = useCallback(async (id, updatedLeavePeriod) => {
+    setIsLoading(true);
+    try {
+      const editedLeavePeriod = await updateLeavePeriod(id, updatedLeavePeriod);
+      if (editedLeavePeriod) {
+        const updatedLeavePeriods = await getLeavePeriods() || [];
+        setLeavePeriods(updatedLeavePeriods);
+        alert(`Leave period updated successfully! ID: ${id}`);
+      } else {
+        alert('Failed to update leave period.');
+      }
+    } catch (error) {
+      console.error("Error updating leave period:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Memoize handleDeleteLeavePeriod
+  const handleDeleteLeavePeriod = useCallback(async (id) => {
+    setIsLoading(true);
+    try {
+      await deleteLeavePeriod(id);
+      const updatedLeavePeriods = await getLeavePeriods() || [];
+      setLeavePeriods(updatedLeavePeriods);
+      alert(`Leave period deleted successfully! ID: ${id}`);
+    } catch (error) {
+      console.error("Error deleting leave period:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // --- Render Logic ---
 
   // Show loading indicator more accurately
@@ -259,6 +321,7 @@ function App() {
         <button onClick={() => setView('myStatus')} disabled={view === 'myStatus'} className={view === 'myStatus' ? 'active' : ''}>My Status</button>
         <button onClick={() => setView('statusTable')} disabled={view === 'statusTable'} className={view === 'statusTable' ? 'active' : ''}>Status Table</button>
         <button onClick={() => setView('manageEmployees')} disabled={view === 'manageEmployees'} className={view === 'manageEmployees' ? 'active' : ''}>Manage Employees</button>
+        <button onClick={() => setView('manageLeavePeriods')} disabled={view === 'manageLeavePeriods'} className={view === 'manageLeavePeriods' ? 'active' : ''}>Manage Leave Periods</button>
       </nav>
 
       <main>
@@ -299,6 +362,14 @@ function App() {
               <ManageEmployeesView
                 employees={employees}
                 onAddEmployee={handleAddEmployee}
+              />
+            )}
+            {view === 'manageLeavePeriods' && (
+              <ManageLeavePeriodsView
+                leavePeriods={leavePeriods}
+                onAddLeavePeriod={handleAddLeavePeriod}
+                onEditLeavePeriod={handleEditLeavePeriod}
+                onDeleteLeavePeriod={handleDeleteLeavePeriod}
               />
             )}
           </>

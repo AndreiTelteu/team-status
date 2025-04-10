@@ -1,5 +1,15 @@
 // @ts-check
-import { getAllEmployees, addEmployeeDB, getAllStatuses, saveStatusDB, getStatusesForUserAndDate } from "./db";
+import { 
+  getAllEmployees, 
+  addEmployeeDB, 
+  getAllStatuses, 
+  saveStatusDB, 
+  getStatusesForUserAndDate,
+  getAllLeavePeriods,
+  addLeavePeriodDB,
+  updateLeavePeriodDB,
+  deleteLeavePeriodDB
+} from "./db";
 import { existsSync } from "node:fs"; // Use Node's existsSync
 import path from "node:path"; // Use Node's path module
 
@@ -92,6 +102,71 @@ const server = Bun.serve({
         }
         if (method === "POST") {
             return new Response(JSON.stringify({ error: "Status updates are handled via WebSocket (/ws)" }), { status: 405, headers: corsHeaders });
+        }
+      }
+
+      // --- Leave Periods API ---
+      if (route === "/leave-periods") {
+        if (method === "GET") {
+          const leavePeriods = getAllLeavePeriods();
+          return new Response(JSON.stringify(leavePeriods), { headers: corsHeaders });
+        }
+        if (method === "POST") {
+          try {
+            const body = await req.json();
+            if (!body?.fromDate || !body?.untilDate || typeof body.fromDate !== 'string' || typeof body.untilDate !== 'string') {
+              return new Response(JSON.stringify({ error: "Invalid leave period data. Both fromDate and untilDate are required." }), 
+                { status: 400, headers: corsHeaders });
+            }
+            const newLeavePeriod = addLeavePeriodDB(body);
+            if (newLeavePeriod) {
+              return new Response(JSON.stringify(newLeavePeriod), { status: 201, headers: corsHeaders });
+            } else {
+              return new Response(JSON.stringify({ error: "Failed to add leave period" }), 
+                { status: 500, headers: corsHeaders });
+            }
+          } catch (error) {
+            console.error("Error parsing POST /leave-periods body:", error);
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }), 
+              { status: 400, headers: corsHeaders });
+          }
+        }
+      }
+
+      // --- Leave Period by ID API ---
+      const leavePeriodMatch = route.match(/^\/leave-periods\/(\d+)$/);
+      if (leavePeriodMatch) {
+        const id = parseInt(leavePeriodMatch[1], 10);
+        
+        if (method === "PUT") {
+          try {
+            const body = await req.json();
+            if (!body?.fromDate || !body?.untilDate || typeof body.fromDate !== 'string' || typeof body.untilDate !== 'string') {
+              return new Response(JSON.stringify({ error: "Invalid leave period data. Both fromDate and untilDate are required." }), 
+                { status: 400, headers: corsHeaders });
+            }
+            const updatedLeavePeriod = updateLeavePeriodDB(id, body);
+            if (updatedLeavePeriod) {
+              return new Response(JSON.stringify(updatedLeavePeriod), { headers: corsHeaders });
+            } else {
+              return new Response(JSON.stringify({ error: "Leave period not found or update failed" }), 
+                { status: 404, headers: corsHeaders });
+            }
+          } catch (error) {
+            console.error(`Error parsing PUT /leave-periods/${id} body:`, error);
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }), 
+              { status: 400, headers: corsHeaders });
+          }
+        }
+        
+        if (method === "DELETE") {
+          const success = deleteLeavePeriodDB(id);
+          if (success) {
+            return new Response(null, { status: 204, headers: corsHeaders });
+          } else {
+            return new Response(JSON.stringify({ error: "Leave period not found or delete failed" }), 
+              { status: 404, headers: corsHeaders });
+          }
         }
       }
 

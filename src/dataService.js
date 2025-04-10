@@ -37,6 +37,8 @@ async function handleFetch(url, options = {}) {
   }
 }
 
+// --- Employee
+
 export async function getEmployees() {
   return handleFetch(`${API_BASE_URL}/employees`);
 }
@@ -48,6 +50,36 @@ export async function addEmployee(name) {
     body: JSON.stringify({ name }),
   });
 }
+
+// --- Leave Periods
+
+export async function getLeavePeriods() {
+  return handleFetch(`${API_BASE_URL}/leave-periods`);
+}
+
+export async function addLeavePeriod(leavePeriod) {
+  return handleFetch(`${API_BASE_URL}/leave-periods`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(leavePeriod),
+  });
+}
+
+export async function updateLeavePeriod(id, leavePeriod) {
+  return handleFetch(`${API_BASE_URL}/leave-periods/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(leavePeriod),
+  });
+}
+
+export async function deleteLeavePeriod(id) {
+  return handleFetch(`${API_BASE_URL}/leave-periods/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// --- Statuses
 
 // GET statuses is still useful for initial load before WS connects OR as fallback
 export async function getStatuses() {

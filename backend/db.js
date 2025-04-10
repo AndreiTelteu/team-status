@@ -23,6 +23,14 @@ db.run(`
     UNIQUE (employee_id, status_date) -- Ensure only one status per employee per day
   );
 `);
+db.run(`
+  CREATE TABLE IF NOT EXISTS leave_periods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_date TEXT NOT NULL, -- YYYY-MM-DD
+    until_date TEXT NOT NULL, -- YYYY-MM-DD
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
 
 console.log("Database tables checked/created.");
 
@@ -163,6 +171,81 @@ function ensureDefaultUsers() {
     } else {
          console.log("Existing employees found:", employees);
     }
+}
+
+// --- Leave Period Functions ---
+
+export function getAllLeavePeriods() {
+  try {
+    const query = db.query(`
+      SELECT id, from_date as fromDate, until_date as untilDate
+      FROM leave_periods
+      ORDER BY from_date;
+    `);
+    return query.all();
+  } catch (error) {
+    console.error("Error fetching leave periods:", error);
+    return [];
+  }
+}
+
+export function addLeavePeriodDB(leavePeriod) {
+  try {
+    const { fromDate, untilDate } = leavePeriod;
+    const query = db.query(`
+      INSERT INTO leave_periods (from_date, until_date)
+      VALUES (?, ?)
+      RETURNING id, from_date as fromDate, until_date as untilDate;
+    `);
+    const newLeavePeriod = query.get(fromDate, untilDate);
+    console.log("Added leave period:", newLeavePeriod);
+    return newLeavePeriod;
+  } catch (error) {
+    console.error("Error adding leave period:", error);
+    return null;
+  }
+}
+
+export function updateLeavePeriodDB(id, leavePeriod) {
+  try {
+    const { fromDate, untilDate } = leavePeriod;
+    const query = db.query(`
+      UPDATE leave_periods
+      SET from_date = ?, until_date = ?
+      WHERE id = ?
+      RETURNING id, from_date as fromDate, until_date as untilDate;
+    `);
+    const updatedLeavePeriod = query.get(fromDate, untilDate, id);
+    if (!updatedLeavePeriod) {
+      console.warn(`No leave period found with id: ${id}`);
+      return null;
+    }
+    console.log("Updated leave period:", updatedLeavePeriod);
+    return updatedLeavePeriod;
+  } catch (error) {
+    console.error(`Error updating leave period with id ${id}:`, error);
+    return null;
+  }
+}
+
+export function deleteLeavePeriodDB(id) {
+  try {
+    const query = db.query(`
+      DELETE FROM leave_periods
+      WHERE id = ?
+      RETURNING id;
+    `);
+    const result = query.get(id);
+    if (!result) {
+      console.warn(`No leave period found with id: ${id}`);
+      return false;
+    }
+    console.log(`Deleted leave period with id: ${id}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting leave period with id ${id}:`, error);
+    return false;
+  }
 }
 
 ensureDefaultUsers();
