@@ -160,7 +160,22 @@ const server = Bun.serve({
         }
         
         if (method === "DELETE") {
-          const success = deleteLeavePeriodDB(id);
+          // Extract employeeId from request body for DELETE
+          let employeeId;
+          try {
+            const body = await req.json();
+            employeeId = body?.employeeId;
+            if (!employeeId || typeof employeeId !== 'string') {
+              return new Response(JSON.stringify({ error: "Invalid or missing employeeId" }), 
+                { status: 400, headers: corsHeaders });
+            }
+          } catch (error) {
+            console.error(`Error parsing DELETE /leave-periods/${id} body:`, error);
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }), 
+              { status: 400, headers: corsHeaders });
+          }
+          
+          const success = deleteLeavePeriodDB(id, employeeId);
           if (success) {
             return new Response(null, { status: 204, headers: corsHeaders });
           } else {

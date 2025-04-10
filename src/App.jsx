@@ -242,7 +242,9 @@ function App() {
   const handleAddLeavePeriod = useCallback(async (newLeavePeriod) => {
     setIsLoading(true);
     try {
-      const addedLeavePeriod = await addLeavePeriod(newLeavePeriod);
+      // Include selectedUserId in the leave period data
+      const leavePeriodWithUserId = { ...newLeavePeriod, employeeId: selectedUserId };
+      const addedLeavePeriod = await addLeavePeriod(leavePeriodWithUserId);
       if (addedLeavePeriod) {
         const updatedLeavePeriods = await getLeavePeriods() || [];
         setLeavePeriods(updatedLeavePeriods);
@@ -255,13 +257,15 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedUserId]); // Add selectedUserId as a dependency
 
   // Memoize handleEditLeavePeriod
   const handleEditLeavePeriod = useCallback(async (id, updatedLeavePeriod) => {
     setIsLoading(true);
     try {
-      const editedLeavePeriod = await updateLeavePeriod(id, updatedLeavePeriod);
+      // Include selectedUserId in the updated leave period data
+      const leavePeriodWithUserId = { ...updatedLeavePeriod, employeeId: selectedUserId };
+      const editedLeavePeriod = await updateLeavePeriod(id, leavePeriodWithUserId);
       if (editedLeavePeriod) {
         const updatedLeavePeriods = await getLeavePeriods() || [];
         setLeavePeriods(updatedLeavePeriods);
@@ -274,13 +278,14 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedUserId]); // Add selectedUserId as a dependency
 
   // Memoize handleDeleteLeavePeriod
   const handleDeleteLeavePeriod = useCallback(async (id) => {
     setIsLoading(true);
     try {
-      await deleteLeavePeriod(id);
+      // Pass selectedUserId to the delete function
+      await deleteLeavePeriod(id, selectedUserId);
       const updatedLeavePeriods = await getLeavePeriods() || [];
       setLeavePeriods(updatedLeavePeriods);
       alert(`Leave period deleted successfully! ID: ${id}`);
@@ -289,7 +294,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedUserId]); // Add selectedUserId as a dependency
 
   // --- Render Logic ---
 
@@ -366,6 +371,7 @@ function App() {
             )}
             {view === 'manageLeavePeriods' && (
               <ManageLeavePeriodsView
+                selectedUserId={selectedUserId}
                 leavePeriods={leavePeriods}
                 onAddLeavePeriod={handleAddLeavePeriod}
                 onEditLeavePeriod={handleEditLeavePeriod}

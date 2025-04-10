@@ -26,9 +26,11 @@ db.run(`
 db.run(`
   CREATE TABLE IF NOT EXISTS leave_periods (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id TEXT NOT NULL, -- Added employee ID
     from_date TEXT NOT NULL, -- YYYY-MM-DD
     until_date TEXT NOT NULL, -- YYYY-MM-DD
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) -- Added foreign key constraint
   );
 `);
 
@@ -54,7 +56,7 @@ function loadInitialStatuses() {
       }
       // Only store the latest status if multiple exist for the same day (shouldn't happen with UNIQUE constraint)
       if (!loadedStatuses[row.employee_id][row.status_date]) {
-         loadedStatuses[row.employee_id][row.status_date] = row.status_text;
+        loadedStatuses[row.employee_id][row.status_date] = row.status_text;
       }
     });
     liveStatuses = loadedStatuses;
@@ -178,7 +180,7 @@ function ensureDefaultUsers() {
 export function getAllLeavePeriods() {
   try {
     const query = db.query(`
-      SELECT id, from_date as fromDate, until_date as untilDate
+      SELECT id, employee_id as employeeId, from_date as fromDate, until_date as untilDate
       FROM leave_periods
       ORDER BY from_date;
     `);
@@ -191,13 +193,13 @@ export function getAllLeavePeriods() {
 
 export function addLeavePeriodDB(leavePeriod) {
   try {
-    const { fromDate, untilDate } = leavePeriod;
+    const { employeeId, fromDate, untilDate } = leavePeriod; // Added employeeId
     const query = db.query(`
-      INSERT INTO leave_periods (from_date, until_date)
-      VALUES (?, ?)
-      RETURNING id, from_date as fromDate, until_date as untilDate;
+      INSERT INTO leave_periods (employee_id, from_date, until_date)
+      VALUES (?, ?, ?)
+      RETURNING id, employee_id as employeeId, from_date as fromDate, until_date as untilDate;
     `);
-    const newLeavePeriod = query.get(fromDate, untilDate);
+    const newLeavePeriod = query.get(employeeId, fromDate, untilDate); // Added employeeId
     console.log("Added leave period:", newLeavePeriod);
     return newLeavePeriod;
   } catch (error) {
@@ -208,14 +210,14 @@ export function addLeavePeriodDB(leavePeriod) {
 
 export function updateLeavePeriodDB(id, leavePeriod) {
   try {
-    const { fromDate, untilDate } = leavePeriod;
+    const { employeeId, fromDate, untilDate } = leavePeriod; // Added employeeId
     const query = db.query(`
       UPDATE leave_periods
-      SET from_date = ?, until_date = ?
+      SET employee_id = ?, from_date = ?, until_date = ?
       WHERE id = ?
-      RETURNING id, from_date as fromDate, until_date as untilDate;
+      RETURNING id, employee_id as employeeId, from_date as fromDate, until_date as untilDate;
     `);
-    const updatedLeavePeriod = query.get(fromDate, untilDate, id);
+    const updatedLeavePeriod = query.get(employeeId, fromDate, untilDate, id); // Added employeeId
     if (!updatedLeavePeriod) {
       console.warn(`No leave period found with id: ${id}`);
       return null;
@@ -228,14 +230,14 @@ export function updateLeavePeriodDB(id, leavePeriod) {
   }
 }
 
-export function deleteLeavePeriodDB(id) {
+export function deleteLeavePeriodDB(id, employeeId) {
   try {
     const query = db.query(`
       DELETE FROM leave_periods
-      WHERE id = ?
+      WHERE id = ? AND employee_id = ?
       RETURNING id;
     `);
-    const result = query.get(id);
+    const result = query.get(id, employeeId);
     if (!result) {
       console.warn(`No leave period found with id: ${id}`);
       return false;

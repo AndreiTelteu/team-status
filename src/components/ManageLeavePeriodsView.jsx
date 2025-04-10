@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
+import UserSelector from './UserSelector';
 
-function ManageLeavePeriodsView({ leavePeriods, onAddLeavePeriod, onEditLeavePeriod, onDeleteLeavePeriod }) {
+function ManageLeavePeriodsView({ selectedUserId, leavePeriods, onAddLeavePeriod, onEditLeavePeriod, onDeleteLeavePeriod }) {
   const [newLeavePeriod, setNewLeavePeriod] = useState({ fromDate: '', untilDate: '' });
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({ fromDate: '', untilDate: '' });
 
+  // Filter leave periods to only show those for the selected user
+  const userLeavePeriods = leavePeriods.filter(lp => lp.employeeId === selectedUserId);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!selectedUserId) {
+      alert('Please select an employee first.');
+      return;
+    }
     if (!newLeavePeriod.fromDate || !newLeavePeriod.untilDate) {
       alert('Please enter both From Date and Until Date.');
       return;
@@ -16,7 +24,11 @@ function ManageLeavePeriodsView({ leavePeriods, onAddLeavePeriod, onEditLeavePer
   };
 
   const handleEditClick = (id) => {
-    const leavePeriodToEdit = leavePeriods.find(lp => lp.id === id);
+    if (!selectedUserId) {
+      alert('Please select an employee first.');
+      return;
+    }
+    const leavePeriodToEdit = userLeavePeriods.find(lp => lp.id === id);
     setEditFormData({ 
       fromDate: leavePeriodToEdit.fromDate, 
       untilDate: leavePeriodToEdit.untilDate 
@@ -26,6 +38,10 @@ function ManageLeavePeriodsView({ leavePeriods, onAddLeavePeriod, onEditLeavePer
 
   const handleEditSubmit = (e, id) => {
     e.preventDefault();
+    if (!selectedUserId) {
+      alert('Please select an employee first.');
+      return;
+    }
     if (!editFormData.fromDate || !editFormData.untilDate) {
       alert('Please enter both From Date and Until Date.');
       return;
@@ -41,6 +57,10 @@ function ManageLeavePeriodsView({ leavePeriods, onAddLeavePeriod, onEditLeavePer
   };
 
   const handleDelete = (id) => {
+    if (!selectedUserId) {
+      alert('Please select an employee first.');
+      return;
+    }
     if (window.confirm("Are you sure you want to delete this leave period?")) {
       onDeleteLeavePeriod(id);
     }
@@ -77,9 +97,9 @@ function ManageLeavePeriodsView({ leavePeriods, onAddLeavePeriod, onEditLeavePer
       {/* Display Current Leave Periods Section */}
       <section>
         <h3>Current Leave Periods</h3>
-        {leavePeriods.length > 0 ? (
+        {userLeavePeriods.length > 0 ? (
           <ul className="leave-period-list">
-            {leavePeriods.map(lp => (
+            {userLeavePeriods.map(lp => (
               <li key={lp.id}>
                 {editingId === lp.id ? (
                   <form onSubmit={(e) => handleEditSubmit(e, lp.id)} className="add-leave-period-form">

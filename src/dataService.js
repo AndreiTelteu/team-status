@@ -58,6 +58,7 @@ export async function getLeavePeriods() {
 }
 
 export async function addLeavePeriod(leavePeriod) {
+  // leavePeriod should now include employeeId from the caller
   return handleFetch(`${API_BASE_URL}/leave-periods`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -66,6 +67,7 @@ export async function addLeavePeriod(leavePeriod) {
 }
 
 export async function updateLeavePeriod(id, leavePeriod) {
+  // leavePeriod should now include employeeId from the caller
   return handleFetch(`${API_BASE_URL}/leave-periods/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -73,9 +75,12 @@ export async function updateLeavePeriod(id, leavePeriod) {
   });
 }
 
-export async function deleteLeavePeriod(id) {
+export async function deleteLeavePeriod(id, employeeId) {
+  // Now includes employeeId parameter
   return handleFetch(`${API_BASE_URL}/leave-periods/${id}`, {
     method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ employeeId }),
   });
 }
 
