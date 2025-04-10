@@ -65,7 +65,7 @@ loadInitialStatuses();
 // --- Employee Functions ---
 export function getAllEmployees() {
   try {
-    const query = db.query("SELECT id, name FROM employees ORDER BY name;");
+    const query = db.query("SELECT id, name FROM employees ORDER BY id;");
     return query.all();
   } catch (error) {
     console.error("Error fetching employees:", error);
