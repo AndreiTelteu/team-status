@@ -3,6 +3,9 @@ import {
   getAllEmployees,
   addEmployeeDB,
   deleteEmployeeDB,
+  getAllClients,
+  addClientDB,
+  deleteClientDB,
   getAllStatuses,
   saveStatusDB,
   getStatusesForUserAndDate,
@@ -106,6 +109,48 @@ const server = Bun.serve({
             return new Response(null, { status: 204, headers: corsHeaders });
           } else {
             return new Response(JSON.stringify({ error: "Employee not found or delete failed" }),
+              { status: 404, headers: corsHeaders });
+          }
+        }
+      }
+
+      // --- Clients API ---
+      if (route === "/clients") {
+        if (method === "GET") {
+          const clients = getAllClients();
+          return new Response(JSON.stringify(clients), { headers: corsHeaders });
+        }
+        if (method === "POST") {
+          try {
+            const body = await req.json();
+            const name = body?.name;
+            if (!name || typeof name !== 'string') {
+              return new Response(JSON.stringify({ error: "Invalid client name provided" }), { status: 400, headers: corsHeaders });
+            }
+            const newClient = addClientDB(name);
+            if (newClient) {
+              return new Response(JSON.stringify(newClient), { status: 201, headers: corsHeaders });
+            } else {
+              return new Response(JSON.stringify({ error: "Failed to add client (maybe duplicate?)" }), { status: 409, headers: corsHeaders });
+            }
+          } catch (error) {
+            console.error("Error parsing POST /clients body:", error);
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: corsHeaders });
+          }
+        }
+      }
+
+      // --- Client by ID API ---
+      const clientMatch = route.match(/^\/clients\/(.+)$/);
+      if (clientMatch) {
+        const id = clientMatch[1];
+
+        if (method === "DELETE") {
+          const success = deleteClientDB(id);
+          if (success) {
+            return new Response(null, { status: 204, headers: corsHeaders });
+          } else {
+            return new Response(JSON.stringify({ error: "Client not found or delete failed" }),
               { status: 404, headers: corsHeaders });
           }
         }

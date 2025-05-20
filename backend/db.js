@@ -13,6 +13,12 @@ db.run(`
   );
 `);
 db.run(`
+  CREATE TABLE IF NOT EXISTS clients (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+  );
+`);
+db.run(`
   CREATE TABLE IF NOT EXISTS statuses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     employee_id TEXT NOT NULL,
@@ -122,6 +128,56 @@ export function deleteEmployeeDB(id) {
   }
 }
 
+// --- Client Functions ---
+export function getAllClients() {
+  try {
+    const query = db.query("SELECT id, name FROM clients ORDER BY id;");
+    return query.all();
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    return [];
+  }
+}
+
+export function addClientDB(name) {
+  try {
+    // Simple ID generation (consider UUIDs for production)
+    const id = `client${Date.now()}${Math.floor(Math.random() * 100)}`;
+    const query = db.query("INSERT INTO clients (id, name) VALUES (?, ?) RETURNING id, name;");
+    const newClient = query.get(id, name);
+    console.log("Added client:", newClient);
+    return newClient;
+  } catch (error) {
+    // Check for UNIQUE constraint violation
+    if (error.message.includes("UNIQUE constraint failed: clients.name")) {
+        console.warn(`Attempted to add duplicate client name: ${name}`);
+        return null; // Indicate duplicate
+    }
+    console.error("Error adding client:", error);
+    return null; // Indicate general error
+  }
+}
+
+export function deleteClientDB(id) {
+  try {
+    const query = db.query(`
+      DELETE FROM clients
+      WHERE id = ?
+      RETURNING id;
+    `);
+    const result = query.get(id);
+    if (!result) {
+      console.warn(`No client found with id: ${id}`);
+      return false;
+    }
+    console.log(`Deleted client with id: ${id}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting client with id ${id}:`, error);
+    return false;
+  }
+}
+
 // --- Status Functions ---
 
 // Gets all statuses directly from the in-memory cache
@@ -192,6 +248,23 @@ function ensureDefaultUsers() {
         console.log("Current employees after adding defaults:", currentEmployees);
     } else {
          console.log("Existing employees found:", employees);
+    }
+}
+
+// Ensure default clients exist if DB is empty
+function ensureDefaultClients() {
+    const clients = getAllClients();
+    if (clients.length === 0) {
+        let seedClients = [
+          'Synevo',
+        ];
+        for (const name of seedClients) {
+          addClientDB(name);
+        }
+        const currentClients = getAllClients();
+        console.log("Current clients after adding defaults:", currentClients);
+    } else {
+        console.log("Existing clients found:", clients);
     }
 }
 
@@ -271,3 +344,4 @@ export function deleteLeavePeriodDB(id, employeeId) {
 }
 
 ensureDefaultUsers();
+ensureDefaultClients();

@@ -3,9 +3,10 @@ import Confetti from 'react-confetti';
 import MyStatusView from './components/MyStatusView';
 import StatusTableView from './components/StatusTableView';
 import ManageEmployeesView from './components/ManageEmployeesView';
+import ManageClientsView from './components/ManageClientsView';
 import ManageLeavePeriodsView from './components/ManageLeavePeriodsView';
 import UserSelector from './components/UserSelector';
-import { getEmployees, addEmployee, deleteEmployee, getLeavePeriods, addLeavePeriod, updateLeavePeriod, deleteLeavePeriod, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
+import { getEmployees, addEmployee, deleteEmployee, getClients, addClient, deleteClient, getLeavePeriods, addLeavePeriod, updateLeavePeriod, deleteLeavePeriod, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
 import './App.css';
 import { getTodayDateString } from './utils/dateUtils';
 
@@ -18,12 +19,14 @@ const hashToView = {
   '#my-status': 'myStatus',
   '#status-table': 'statusTable',
   '#employees': 'manageEmployees',
+  '#clients': 'manageClients',
   '#vacations': 'manageLeavePeriods',
 };
 const viewToHash = {
   'myStatus': '#my-status',
   'statusTable': '#status-table',
   'manageEmployees': '#employees',
+  'manageClients': '#clients',
   'manageLeavePeriods': '#vacations',
 };
 
@@ -35,6 +38,7 @@ function App() {
   });
   const [statuses, setStatuses] = useState({}); // { userId: { date: statusText } }
   const [employees, setEmployees] = useState([]);
+  const [clients, setClients] = useState([]);
   const [leavePeriods, setLeavePeriods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -97,6 +101,10 @@ function App() {
         // Load employees
         const fetchedEmployees = await getEmployees() || []; // Ensure it's an array
         setEmployees(fetchedEmployees);
+
+        // Load clients
+        const fetchedClients = await getClients() || []; // Ensure it's an array
+        setClients(fetchedClients);
 
         // Load leave periods
         const fetchedLeavePeriods = await getLeavePeriods() || [];
@@ -246,9 +254,48 @@ function App() {
         // Re-fetch employees to get the updated list
         const updatedEmployees = await getEmployees() || [];
         setEmployees(updatedEmployees);
+        // alert(`Employee "${name}" deleted successfully!`);
     } catch (error) {
         console.error("Error deleting employee:", error);
         alert(`Failed to delete employee. ${error.message}`);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []); // No dependencies needed
+
+  // Memoize handleAddClient
+  const handleAddClient = useCallback(async (clientName) => {
+    setIsLoading(true); // Indicate activity
+    try {
+        const newClient = await addClient(clientName);
+        if (newClient) {
+          // Re-fetch clients to get the updated list including the new ID
+          const updatedClients = await getClients() || [];
+          setClients(updatedClients);
+          // alert(`Client "${clientName}" added successfully! ID: ${newClient.id}`);
+        } else {
+            // Handle case where addClient returns null (e.g., duplicate name)
+            alert(`Failed to add client "${clientName}". Name might already exist.`);
+        }
+    } catch (error) {
+        console.error("Error adding client in component:", error);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []); // No dependencies needed
+
+  // Memoize handleDeleteClient
+  const handleDeleteClient = useCallback(async (id, name) => {
+    setIsLoading(true); // Indicate activity
+    try {
+        await deleteClient(id);
+        // Re-fetch clients to get the updated list
+        const updatedClients = await getClients() || [];
+        setClients(updatedClients);
+        // alert(`Client "${name}" deleted successfully!`);
+    } catch (error) {
+        console.error("Error deleting client:", error);
+        alert(`Failed to delete client. ${error.message}`);
     } finally {
         setIsLoading(false);
     }
@@ -264,7 +311,7 @@ function App() {
       if (addedLeavePeriod) {
         const updatedLeavePeriods = await getLeavePeriods() || [];
         setLeavePeriods(updatedLeavePeriods);
-        alert(`Leave period added successfully! ID: ${addedLeavePeriod.id}`);
+        // alert(`Leave period added successfully! ID: ${addedLeavePeriod.id}`);
       } else {
         alert('Failed to add leave period.');
       }
@@ -285,7 +332,7 @@ function App() {
       if (editedLeavePeriod) {
         const updatedLeavePeriods = await getLeavePeriods() || [];
         setLeavePeriods(updatedLeavePeriods);
-        alert(`Leave period updated successfully! ID: ${id}`);
+        // alert(`Leave period updated successfully! ID: ${id}`);
       } else {
         alert('Failed to update leave period.');
       }
@@ -304,7 +351,7 @@ function App() {
       await deleteLeavePeriod(id, selectedUserId);
       const updatedLeavePeriods = await getLeavePeriods() || [];
       setLeavePeriods(updatedLeavePeriods);
-      alert(`Leave period deleted successfully! ID: ${id}`);
+      // alert(`Leave period deleted successfully! ID: ${id}`);
     } catch (error) {
       console.error("Error deleting leave period:", error);
     } finally {
@@ -342,6 +389,7 @@ function App() {
         <button onClick={() => setView('myStatus')} disabled={view === 'myStatus'} className={view === 'myStatus' ? 'active' : ''}>My Status</button>
         <button onClick={() => setView('statusTable')} disabled={view === 'statusTable'} className={view === 'statusTable' ? 'active' : ''}>Status Table</button>
         <button onClick={() => setView('manageEmployees')} disabled={view === 'manageEmployees'} className={view === 'manageEmployees' ? 'active' : ''}>Manage Employees</button>
+        <button onClick={() => setView('manageClients')} disabled={view === 'manageClients'} className={view === 'manageClients' ? 'active' : ''}>Manage Clients</button>
         <button onClick={() => setView('manageLeavePeriods')} disabled={view === 'manageLeavePeriods'} className={view === 'manageLeavePeriods' ? 'active' : ''}>Manage Leave Periods</button>
       </nav>
 
@@ -384,6 +432,13 @@ function App() {
                 employees={employees}
                 onAddEmployee={handleAddEmployee}
                 onDeleteEmployee={handleDeleteEmployee}
+              />
+            )}
+            {view === 'manageClients' && (
+              <ManageClientsView
+                clients={clients}
+                onAddClient={handleAddClient}
+                onDeleteClient={handleDeleteClient}
               />
             )}
             {view === 'manageLeavePeriods' && (
