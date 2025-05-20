@@ -40,6 +40,20 @@ db.run(`
   );
 `);
 
+db.run(`
+  CREATE TABLE IF NOT EXISTS offers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id TEXT NOT NULL,
+    project_name TEXT NOT NULL,
+    description TEXT,
+    request_date TEXT NOT NULL, -- YYYY-MM-DD
+    employees_assigned TEXT, -- JSON string of employee IDs
+    status TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id)
+  );
+`);
+
 console.log("Database tables checked/created.");
 
 // --- In-Memory Cache for Live Updates ---
@@ -339,6 +353,92 @@ export function deleteLeavePeriodDB(id, employeeId) {
     return true;
   } catch (error) {
     console.error(`Error deleting leave period with id ${id}:`, error);
+    return false;
+  }
+}
+
+// --- Offers Functions ---
+
+export function getAllOffers() {
+  try {
+    const query = db.query(`
+      SELECT
+        o.id,
+        o.client_id as clientId,
+        c.name as clientName,
+        o.project_name as projectName,
+        o.description,
+        o.request_date as requestDate,
+        o.employees_assigned as employeesAssigned,
+        o.status
+      FROM offers o
+      JOIN clients c ON o.client_id = c.id
+      ORDER BY o.id DESC;
+    `);
+    return query.all();
+  } catch (error) {
+    console.error("Error fetching offers:", error);
+    return [];
+  }
+}
+
+export function addOfferDB(offer) {
+  try {
+    const { clientId, projectName, description, requestDate, employeesAssigned, status } = offer;
+    const query = db.query(`
+      INSERT INTO offers (client_id, project_name, description, request_date, employees_assigned, status)
+      VALUES (?, ?, ?, ?, ?, ?)
+      RETURNING id, client_id as clientId, project_name as projectName, description,
+                request_date as requestDate, employees_assigned as employeesAssigned, status;
+    `);
+    const newOffer = query.get(clientId, projectName, description, requestDate, employeesAssigned, status);
+    console.log("Added offer:", newOffer);
+    return newOffer;
+  } catch (error) {
+    console.error("Error adding offer:", error);
+    return null;
+  }
+}
+
+export function updateOfferDB(id, offer) {
+  try {
+    const { clientId, projectName, description, requestDate, employeesAssigned, status } = offer;
+    const query = db.query(`
+      UPDATE offers
+      SET client_id = ?, project_name = ?, description = ?, request_date = ?, employees_assigned = ?, status = ?
+      WHERE id = ?
+      RETURNING id, client_id as clientId, project_name as projectName, description,
+                request_date as requestDate, employees_assigned as employeesAssigned, status;
+    `);
+    const updatedOffer = query.get(clientId, projectName, description, requestDate, employeesAssigned, status, id);
+    if (!updatedOffer) {
+      console.warn(`No offer found with id: ${id}`);
+      return null;
+    }
+    console.log("Updated offer:", updatedOffer);
+    return updatedOffer;
+  } catch (error) {
+    console.error(`Error updating offer with id ${id}:`, error);
+    return null;
+  }
+}
+
+export function deleteOfferDB(id) {
+  try {
+    const query = db.query(`
+      DELETE FROM offers
+      WHERE id = ?
+      RETURNING id;
+    `);
+    const result = query.get(id);
+    if (!result) {
+      console.warn(`No offer found with id: ${id}`);
+      return false;
+    }
+    console.log(`Deleted offer with id: ${id}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting offer with id ${id}:`, error);
     return false;
   }
 }

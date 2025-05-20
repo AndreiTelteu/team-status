@@ -12,7 +12,11 @@ import {
   getAllLeavePeriods,
   addLeavePeriodDB,
   updateLeavePeriodDB,
-  deleteLeavePeriodDB
+  deleteLeavePeriodDB,
+  getAllOffers,
+  addOfferDB,
+  updateOfferDB,
+  deleteOfferDB
 } from "./db";
 import { existsSync } from "node:fs"; // Use Node's existsSync
 import path from "node:path"; // Use Node's path module
@@ -242,6 +246,71 @@ const server = Bun.serve({
             return new Response(null, { status: 204, headers: corsHeaders });
           } else {
             return new Response(JSON.stringify({ error: "Leave period not found or delete failed" }),
+              { status: 404, headers: corsHeaders });
+          }
+        }
+      }
+
+      // --- Offers API ---
+      if (route === "/offers") {
+        if (method === "GET") {
+          const offers = getAllOffers();
+          return new Response(JSON.stringify(offers), { headers: corsHeaders });
+        }
+        if (method === "POST") {
+          try {
+            const body = await req.json();
+            if (!body?.clientId || !body?.projectName || !body?.requestDate || !body?.status) {
+              return new Response(JSON.stringify({ error: "Invalid offer data. clientId, projectName, requestDate, and status are required." }),
+                { status: 400, headers: corsHeaders });
+            }
+            const newOffer = addOfferDB(body);
+            if (newOffer) {
+              return new Response(JSON.stringify(newOffer), { status: 201, headers: corsHeaders });
+            } else {
+              return new Response(JSON.stringify({ error: "Failed to add offer" }),
+                { status: 500, headers: corsHeaders });
+            }
+          } catch (error) {
+            console.error("Error parsing POST /offers body:", error);
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }),
+              { status: 400, headers: corsHeaders });
+          }
+        }
+      }
+
+      // --- Offer by ID API ---
+      const offerMatch = route.match(/^\/offers\/(\d+)$/);
+      if (offerMatch) {
+        const id = parseInt(offerMatch[1], 10);
+
+        if (method === "PUT") {
+          try {
+            const body = await req.json();
+            if (!body?.clientId || !body?.projectName || !body?.requestDate || !body?.status) {
+              return new Response(JSON.stringify({ error: "Invalid offer data. clientId, projectName, requestDate, and status are required." }),
+                { status: 400, headers: corsHeaders });
+            }
+            const updatedOffer = updateOfferDB(id, body);
+            if (updatedOffer) {
+              return new Response(JSON.stringify(updatedOffer), { headers: corsHeaders });
+            } else {
+              return new Response(JSON.stringify({ error: "Offer not found or update failed" }),
+                { status: 404, headers: corsHeaders });
+            }
+          } catch (error) {
+            console.error(`Error parsing PUT /offers/${id} body:`, error);
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }),
+              { status: 400, headers: corsHeaders });
+          }
+        }
+
+        if (method === "DELETE") {
+          const success = deleteOfferDB(id);
+          if (success) {
+            return new Response(null, { status: 204, headers: corsHeaders });
+          } else {
+            return new Response(JSON.stringify({ error: "Offer not found or delete failed" }),
               { status: 404, headers: corsHeaders });
           }
         }

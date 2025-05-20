@@ -5,6 +5,7 @@ import StatusTableView from './components/StatusTableView';
 import ManageEmployeesView from './components/ManageEmployeesView';
 import ManageClientsView from './components/ManageClientsView';
 import ManageLeavePeriodsView from './components/ManageLeavePeriodsView';
+import ManageOffersView from './components/ManageOffersView';
 import UserSelector from './components/UserSelector';
 import { getEmployees, addEmployee, deleteEmployee, getClients, addClient, deleteClient, getLeavePeriods, addLeavePeriod, updateLeavePeriod, deleteLeavePeriod, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
 import './App.css';
@@ -21,6 +22,7 @@ const hashToView = {
   '#employees': 'manageEmployees',
   '#clients': 'manageClients',
   '#vacations': 'manageLeavePeriods',
+  '#offers': 'manageOffers',
 };
 const viewToHash = {
   'myStatus': '#my-status',
@@ -28,6 +30,7 @@ const viewToHash = {
   'manageEmployees': '#employees',
   'manageClients': '#clients',
   'manageLeavePeriods': '#vacations',
+  'manageOffers': '#offers',
 };
 
 function App() {
@@ -391,6 +394,7 @@ function App() {
         <button onClick={() => setView('manageEmployees')} disabled={view === 'manageEmployees'} className={view === 'manageEmployees' ? 'active' : ''}>Manage Employees</button>
         <button onClick={() => setView('manageClients')} disabled={view === 'manageClients'} className={view === 'manageClients' ? 'active' : ''}>Manage Clients</button>
         <button onClick={() => setView('manageLeavePeriods')} disabled={view === 'manageLeavePeriods'} className={view === 'manageLeavePeriods' ? 'active' : ''}>Manage Leave Periods</button>
+        <button onClick={() => setView('manageOffers')} disabled={view === 'manageOffers'} className={view === 'manageOffers' ? 'active' : ''}>Manage Offers</button>
       </nav>
 
       <main>
@@ -449,6 +453,9 @@ function App() {
                 onEditLeavePeriod={handleEditLeavePeriod}
                 onDeleteLeavePeriod={handleDeleteLeavePeriod}
               />
+            )}
+            {view === 'manageOffers' && (
+              <ManageOffersView key={view} />
             )}
           </>
         )}

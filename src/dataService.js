@@ -112,6 +112,35 @@ export async function deleteLeavePeriod(id, employeeId) {
   });
 }
 
+// --- Offers
+
+export async function getOffers() {
+  return handleFetch(`${API_BASE_URL}/offers`);
+}
+
+export async function addOffer(offer) {
+  return handleFetch(`${API_BASE_URL}/offers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(offer),
+  });
+}
+
+export async function updateOffer(id, offer) {
+  return handleFetch(`${API_BASE_URL}/offers/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(offer),
+  });
+}
+
+export async function deleteOffer(id) {
+  return handleFetch(`${API_BASE_URL}/offers/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 // --- Statuses
 
 // GET statuses is still useful for initial load before WS connects OR as fallback
