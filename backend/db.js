@@ -102,6 +102,26 @@ export function addEmployeeDB(name) {
   }
 }
 
+export function deleteEmployeeDB(id) {
+  try {
+    const query = db.query(`
+      DELETE FROM employees
+      WHERE id = ?
+      RETURNING id;
+    `);
+    const result = query.get(id);
+    if (!result) {
+      console.warn(`No employee found with id: ${id}`);
+      return false;
+    }
+    console.log(`Deleted employee with id: ${id}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting employee with id ${id}:`, error);
+    return false;
+  }
+}
+
 // --- Status Functions ---
 
 // Gets all statuses directly from the in-memory cache

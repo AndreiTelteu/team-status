@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function ManageEmployeesView({ employees, onAddEmployee }) {
+function ManageEmployeesView({ employees, onAddEmployee, onDeleteEmployee }) {
   const [newEmployeeName, setNewEmployeeName] = useState('');
 
   const handleSubmit = (e) => {
@@ -11,6 +11,12 @@ function ManageEmployeesView({ employees, onAddEmployee }) {
     }
     onAddEmployee(newEmployeeName.trim());
     setNewEmployeeName(''); // Clear input after submission
+  };
+
+  const handleDelete = (id, name) => {
+    if (confirm(`Are you sure you want to delete employee "${name}"?`)) {
+      onDeleteEmployee(id, name);
+    }
   };
 
   return (
@@ -42,8 +48,13 @@ function ManageEmployeesView({ employees, onAddEmployee }) {
           <ul className="employee-list"> {/* Added class */}
             {employees.map(emp => (
               <li key={emp.id}>
-                <small>ID: {emp.id}</small>
-                &nbsp;|&nbsp;{emp.name}
+                {emp.name}
+                <button
+                  className="delete-button"
+                  onClick={() => handleDelete(emp.id, emp.name)}
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>

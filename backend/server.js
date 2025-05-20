@@ -1,9 +1,10 @@
 // @ts-check
-import { 
-  getAllEmployees, 
-  addEmployeeDB, 
-  getAllStatuses, 
-  saveStatusDB, 
+import {
+  getAllEmployees,
+  addEmployeeDB,
+  deleteEmployeeDB,
+  getAllStatuses,
+  saveStatusDB,
   getStatusesForUserAndDate,
   getAllLeavePeriods,
   addLeavePeriodDB,
@@ -94,6 +95,22 @@ const server = Bun.serve({
         }
       }
 
+      // --- Employee by ID API ---
+      const employeeMatch = route.match(/^\/employees\/(.+)$/);
+      if (employeeMatch) {
+        const id = employeeMatch[1];
+
+        if (method === "DELETE") {
+          const success = deleteEmployeeDB(id);
+          if (success) {
+            return new Response(null, { status: 204, headers: corsHeaders });
+          } else {
+            return new Response(JSON.stringify({ error: "Employee not found or delete failed" }),
+              { status: 404, headers: corsHeaders });
+          }
+        }
+      }
+
       // --- Statuses API (GET only) ---
       if (route === "/statuses") {
         if (method === "GET") {
@@ -115,19 +132,19 @@ const server = Bun.serve({
           try {
             const body = await req.json();
             if (!body?.fromDate || !body?.untilDate || typeof body.fromDate !== 'string' || typeof body.untilDate !== 'string') {
-              return new Response(JSON.stringify({ error: "Invalid leave period data. Both fromDate and untilDate are required." }), 
+              return new Response(JSON.stringify({ error: "Invalid leave period data. Both fromDate and untilDate are required." }),
                 { status: 400, headers: corsHeaders });
             }
             const newLeavePeriod = addLeavePeriodDB(body);
             if (newLeavePeriod) {
               return new Response(JSON.stringify(newLeavePeriod), { status: 201, headers: corsHeaders });
             } else {
-              return new Response(JSON.stringify({ error: "Failed to add leave period" }), 
+              return new Response(JSON.stringify({ error: "Failed to add leave period" }),
                 { status: 500, headers: corsHeaders });
             }
           } catch (error) {
             console.error("Error parsing POST /leave-periods body:", error);
-            return new Response(JSON.stringify({ error: "Invalid JSON body" }), 
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }),
               { status: 400, headers: corsHeaders });
           }
         }
@@ -137,28 +154,28 @@ const server = Bun.serve({
       const leavePeriodMatch = route.match(/^\/leave-periods\/(\d+)$/);
       if (leavePeriodMatch) {
         const id = parseInt(leavePeriodMatch[1], 10);
-        
+
         if (method === "PUT") {
           try {
             const body = await req.json();
             if (!body?.fromDate || !body?.untilDate || typeof body.fromDate !== 'string' || typeof body.untilDate !== 'string') {
-              return new Response(JSON.stringify({ error: "Invalid leave period data. Both fromDate and untilDate are required." }), 
+              return new Response(JSON.stringify({ error: "Invalid leave period data. Both fromDate and untilDate are required." }),
                 { status: 400, headers: corsHeaders });
             }
             const updatedLeavePeriod = updateLeavePeriodDB(id, body);
             if (updatedLeavePeriod) {
               return new Response(JSON.stringify(updatedLeavePeriod), { headers: corsHeaders });
             } else {
-              return new Response(JSON.stringify({ error: "Leave period not found or update failed" }), 
+              return new Response(JSON.stringify({ error: "Leave period not found or update failed" }),
                 { status: 404, headers: corsHeaders });
             }
           } catch (error) {
             console.error(`Error parsing PUT /leave-periods/${id} body:`, error);
-            return new Response(JSON.stringify({ error: "Invalid JSON body" }), 
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }),
               { status: 400, headers: corsHeaders });
           }
         }
-        
+
         if (method === "DELETE") {
           // Extract employeeId from request body for DELETE
           let employeeId;
@@ -166,20 +183,20 @@ const server = Bun.serve({
             const body = await req.json();
             employeeId = body?.employeeId;
             if (!employeeId || typeof employeeId !== 'string') {
-              return new Response(JSON.stringify({ error: "Invalid or missing employeeId" }), 
+              return new Response(JSON.stringify({ error: "Invalid or missing employeeId" }),
                 { status: 400, headers: corsHeaders });
             }
           } catch (error) {
             console.error(`Error parsing DELETE /leave-periods/${id} body:`, error);
-            return new Response(JSON.stringify({ error: "Invalid JSON body" }), 
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }),
               { status: 400, headers: corsHeaders });
           }
-          
+
           const success = deleteLeavePeriodDB(id, employeeId);
           if (success) {
             return new Response(null, { status: 204, headers: corsHeaders });
           } else {
-            return new Response(JSON.stringify({ error: "Leave period not found or delete failed" }), 
+            return new Response(JSON.stringify({ error: "Leave period not found or delete failed" }),
               { status: 404, headers: corsHeaders });
           }
         }

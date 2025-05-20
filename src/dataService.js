@@ -51,6 +51,13 @@ export async function addEmployee(name) {
   });
 }
 
+export async function deleteEmployee(id) {
+  return handleFetch(`${API_BASE_URL}/employees/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 // --- Leave Periods
 
 export async function getLeavePeriods() {

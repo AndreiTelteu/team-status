@@ -316,9 +316,25 @@ main {
 .manage-employees-view li {
   padding: 8px 0;
   border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .manage-employees-view li:last-child {
   border-bottom: none;
+}
+.manage-employees-view .delete-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+.manage-employees-view .delete-button:hover {
+  background-color: #c0392b;
 }
 
 .add-employee-form {

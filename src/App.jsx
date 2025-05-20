@@ -5,7 +5,7 @@ import StatusTableView from './components/StatusTableView';
 import ManageEmployeesView from './components/ManageEmployeesView';
 import ManageLeavePeriodsView from './components/ManageLeavePeriodsView';
 import UserSelector from './components/UserSelector';
-import { getEmployees, addEmployee, getLeavePeriods, addLeavePeriod, updateLeavePeriod, deleteLeavePeriod, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
+import { getEmployees, addEmployee, deleteEmployee, getLeavePeriods, addLeavePeriod, updateLeavePeriod, deleteLeavePeriod, useWebSocket, sendTypingUpdate as sendWsTypingUpdate } from './dataService';
 import './App.css';
 import { getTodayDateString } from './utils/dateUtils';
 
@@ -47,7 +47,7 @@ function App() {
     height: window.innerHeight,
   });
   const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
-  
+
   // --- User Selection Handling ---
   const handleUserSelect = (userId, userName) => {
     if (userId) {
@@ -75,7 +75,7 @@ function App() {
   useEffect(() => {
     // Update hash when view changes
     window.history.replaceState(null, '', viewToHash[view] || '');
-    
+
     // Listen for hash changes
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -84,7 +84,7 @@ function App() {
         setView(newView);
       }
     };
-    
+
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [view, viewToHash, hashToView]);
@@ -97,11 +97,11 @@ function App() {
         // Load employees
         const fetchedEmployees = await getEmployees() || []; // Ensure it's an array
         setEmployees(fetchedEmployees);
-        
+
         // Load leave periods
         const fetchedLeavePeriods = await getLeavePeriods() || [];
         setLeavePeriods(fetchedLeavePeriods);
-        
+
         // If we have a selected user ID, find their name
         if (selectedUserId) {
           const user = fetchedEmployees?.find(emp => emp.id === selectedUserId);
@@ -238,6 +238,22 @@ function App() {
     }
   }, []); // No dependencies needed
 
+  // Memoize handleDeleteEmployee
+  const handleDeleteEmployee = useCallback(async (id, name) => {
+    setIsLoading(true); // Indicate activity
+    try {
+        await deleteEmployee(id);
+        // Re-fetch employees to get the updated list
+        const updatedEmployees = await getEmployees() || [];
+        setEmployees(updatedEmployees);
+    } catch (error) {
+        console.error("Error deleting employee:", error);
+        alert(`Failed to delete employee. ${error.message}`);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []); // No dependencies needed
+
   // Memoize handleAddLeavePeriod
   const handleAddLeavePeriod = useCallback(async (newLeavePeriod) => {
     setIsLoading(true);
@@ -367,6 +383,7 @@ function App() {
               <ManageEmployeesView
                 employees={employees}
                 onAddEmployee={handleAddEmployee}
+                onDeleteEmployee={handleDeleteEmployee}
               />
             )}
             {view === 'manageLeavePeriods' && (
