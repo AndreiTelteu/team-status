@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { showNotification } from './utils/notification';
 
 const API_BASE_URL = '/api';
 const WS_BASE_URL = '/ws'; // WebSocket URL
@@ -32,7 +33,6 @@ async function handleFetch(url, options = {}) {
     }
   } catch (error) {
     console.error(`Fetch error for ${url}:`, error);
-    alert(`Error communicating with server: ${error.message}`);
     throw error; // Re-throw to allow caller to handle if needed
   }
 }
@@ -251,8 +251,7 @@ function handleWebSocketClose() {
       reconnectTimeoutId = setTimeout(connectWebSocketInternal, RECONNECT_DELAY);
     } else {
       console.error("Max WebSocket reconnect attempts reached. Giving up.");
-      // Optionally alert the user after max attempts
-      // alert("WebSocket connection lost and could not be re-established. Please refresh the page.");
+      showNotification("WebSocket connection lost and could not be re-established. Please refresh the page.", 'error', 'Connection Error');
     }
 }
 

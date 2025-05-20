@@ -9,6 +9,7 @@
         "react": "^19.0.0",
         "react-confetti": "^6.1.0",
         "react-dom": "^19.0.0",
+        "simple-notify": "^1.0.6",
       },
       "devDependencies": {
         "@eslint/js": "^9.21.0",
@@ -417,6 +418,8 @@
     "shebang-regex": ["shebang-regex@3.0.0", "", {}, "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="],
 
     "shell-quote": ["shell-quote@1.8.2", "", {}, "sha512-AzqKpGKjrj7EM6rKVQEPpB288oCfnrEIuyoT9cyF4nmGa7V8Zk6f7RRqYisX8X9m+Q7bd632aZW4ky7EhbQztA=="],
+
+    "simple-notify": ["simple-notify@1.0.6", "", {}, "sha512-/nO2zwJvMls7MoViV8WpzJccI3LTOM4DfCc21gqtHJEzU1kKMHIBofj9AwjdVrosK+R2nJYJ8F/ImFLAdZpyAw=="],
 
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
 

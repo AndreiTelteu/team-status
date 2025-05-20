@@ -5,6 +5,9 @@ body {
   background-color: #f4f7f6;
   color: #333;
 }
+.sn-notifications-container {
+  box-sizing: border-box;
+}
 
 .app-container {
   max-width: calc(100vw - 80px);

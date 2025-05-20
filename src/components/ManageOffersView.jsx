@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getOffers, addOffer, updateOffer, deleteOffer, getClients, getEmployees } from '../dataService';
 import OfferForm from './OfferForm';
+import { showNotification } from '../utils/notification';
 
 function ManageOffersView() {
   const [offers, setOffers] = useState([]);
@@ -61,11 +62,11 @@ function ManageOffersView() {
         const updatedOffers = await getOffers();
         setOffers(updatedOffers || []);
         // Show a success message
-        // alert('Offer added successfully!');
+        showNotification('Offer added successfully!');
       }
     } catch (error) {
       console.error('Error adding offer:', error);
-      alert('Error adding offer. Please try again.');
+      showNotification('Error adding offer. Please try again.', 'error', 'Error');
     }
   };
 
@@ -80,11 +81,11 @@ function ManageOffersView() {
         const updatedOffers = await getOffers();
         setOffers(updatedOffers || []);
         // Show a success message
-        // alert('Offer updated successfully!');
+        showNotification('Offer updated successfully!');
       }
     } catch (error) {
       console.error('Error updating offer:', error);
-      alert('Error updating offer. Please try again.');
+      showNotification('Error updating offer. Please try again.', 'error', 'Error');
     }
   };
 
@@ -94,8 +95,10 @@ function ManageOffersView() {
       try {
         await deleteOffer(id);
         setOffers(offers.filter(offer => offer.id !== id));
+        showNotification('Offer deleted successfully!');
       } catch (error) {
         console.error('Error deleting offer:', error);
+        showNotification('Error deleting offer. Please try again.', 'error', 'Error');
       }
     }
   };
