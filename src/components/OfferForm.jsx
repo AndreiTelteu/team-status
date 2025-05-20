@@ -112,7 +112,7 @@ function OfferForm({
         <Editor
           id="description"
           onInit={(_, editor) => editorRef.current = editor}
-          tinymceScriptSrc="/tinymce/tinymce.min.js"
+          tinymceScriptSrc="/tinymce/tinymce/tinymce.min.js"
           init={{
             height: 300,
             menubar: false,
