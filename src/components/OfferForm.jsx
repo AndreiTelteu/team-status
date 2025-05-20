@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 
 function OfferForm({
   formData,
@@ -10,6 +11,7 @@ function OfferForm({
   onCancel,
   isEditing
 }) {
+  const editorRef = useRef(null);
   const [selectedEmployees, setSelectedEmployees] = useState(() => {
     try {
       return JSON.parse(formData.employeesAssigned || '[]');
@@ -36,6 +38,14 @@ function OfferForm({
     setFormData({
       ...formData,
       [name]: value
+    });
+  };
+
+  // Handle TinyMCE editor content changes
+  const handleEditorChange = (content) => {
+    setFormData({
+      ...formData,
+      description: content
     });
   };
 
@@ -99,13 +109,28 @@ function OfferForm({
 
       <div className="form-group">
         <label htmlFor="description">Description:</label>
-        <textarea
+        <Editor
           id="description"
-          name="description"
+          onInit={(_, editor) => editorRef.current = editor}
+          tinymceScriptSrc="/tinymce/tinymce.min.js"
+          init={{
+            height: 300,
+            menubar: false,
+            plugins: [
+              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+              'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | blocks | ' +
+              'bold italic forecolor | alignleft aligncenter ' +
+              'alignright alignjustify | bullist numlist outdent indent | ' +
+              'removeformat | help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+            branding: false,
+            promotion: false
+          }}
           value={formData.description}
-          onChange={handleChange}
-          rows="4"
-          placeholder="Enter project description"
+          onEditorChange={handleEditorChange}
         />
       </div>
 
