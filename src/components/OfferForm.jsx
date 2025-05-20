@@ -11,6 +11,8 @@ function OfferForm({
   onCancel,
   isEditing
 }) {
+  // Priority options for dropdown
+  const priorityOptions = ['urgent', 'high', 'medium', 'low'];
   const editorRef = useRef(null);
   const [selectedEmployees, setSelectedEmployees] = useState(() => {
     try {
@@ -179,6 +181,35 @@ function OfferForm({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="priority">Priority:</label>
+        <select
+          id="priority"
+          name="priority"
+          value={formData.priority || ''}
+          onChange={handleChange}
+        >
+          <option value="">Select a priority</option>
+          {priorityOptions.map(priority => (
+            <option key={priority} value={priority}>
+              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="estimation">Estimation:</label>
+        <input
+          type="text"
+          id="estimation"
+          name="estimation"
+          value={formData.estimation || ''}
+          onChange={handleChange}
+          placeholder="e.g., 2 weeks, 5 days, etc."
+        />
       </div>
 
       <div className="form-actions">

@@ -16,7 +16,9 @@ function ManageOffersView() {
     description: '',
     requestDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     employeesAssigned: '[]', // JSON string of employee IDs
-    status: 'New' // Default status
+    status: 'New', // Default status
+    priority: '', // Priority field (urgent, high, medium, low)
+    estimation: '' // Estimation text field
   });
 
   // Status options for dropdown
@@ -112,7 +114,9 @@ function ManageOffersView() {
       description: offer.description || '',
       requestDate: offer.requestDate,
       employeesAssigned: offer.employeesAssigned || '[]',
-      status: offer.status
+      status: offer.status,
+      priority: offer.priority || '',
+      estimation: offer.estimation || ''
     });
     setShowForm(true); // Always show form when editing
   };
@@ -136,7 +140,9 @@ function ManageOffersView() {
       description: '',
       requestDate: new Date().toISOString().split('T')[0],
       employeesAssigned: '[]',
-      status: 'New'
+      status: 'New',
+      priority: '',
+      estimation: ''
     });
     setEditingOfferId(null);
     setShowForm(false); // Hide form when resetting
@@ -215,7 +221,9 @@ function ManageOffersView() {
                   <th>Client</th>
                   <th>Project</th>
                   <th>Request Date</th>
-                  <th>Employees Assigned</th>
+                  {/* <th>Employees Assigned</th> */}
+                  <th>Priority</th>
+                  <th>Estimation</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -226,7 +234,15 @@ function ManageOffersView() {
                     <td>{offer.clientName}</td>
                     <td>{offer.projectName}</td>
                     <td>{offer.requestDate}</td>
-                    <td>{formatEmployeesList(offer.employeesAssigned, employees)}</td>
+                    {/* <td>{formatEmployeesList(offer.employeesAssigned, employees)}</td> */}
+                    <td>
+                      {offer.priority ? (
+                        <span className={`priority-badge priority-${offer.priority}`}>
+                          {offer.priority.charAt(0).toUpperCase() + offer.priority.slice(1)}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td>{offer.estimation || '-'}</td>
                     <td>
                       <span className={`status-badge status-${offer.status.toLowerCase().replace(/\s+/g, '-')}`}>
                         {offer.status}

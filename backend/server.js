@@ -264,6 +264,11 @@ const server = Bun.serve({
               return new Response(JSON.stringify({ error: "Invalid offer data. clientId, projectName, requestDate, and status are required." }),
                 { status: 400, headers: corsHeaders });
             }
+            // Priority and estimation are optional, but we'll validate them if provided
+            if (body.priority && !['urgent', 'high', 'medium', 'low'].includes(body.priority)) {
+              return new Response(JSON.stringify({ error: "Invalid priority value. Must be one of: urgent, high, medium, low" }),
+                { status: 400, headers: corsHeaders });
+            }
             const newOffer = addOfferDB(body);
             if (newOffer) {
               return new Response(JSON.stringify(newOffer), { status: 201, headers: corsHeaders });
@@ -289,6 +294,11 @@ const server = Bun.serve({
             const body = await req.json();
             if (!body?.clientId || !body?.projectName || !body?.requestDate || !body?.status) {
               return new Response(JSON.stringify({ error: "Invalid offer data. clientId, projectName, requestDate, and status are required." }),
+                { status: 400, headers: corsHeaders });
+            }
+            // Priority and estimation are optional, but we'll validate them if provided
+            if (body.priority && !['urgent', 'high', 'medium', 'low'].includes(body.priority)) {
+              return new Response(JSON.stringify({ error: "Invalid priority value. Must be one of: urgent, high, medium, low" }),
                 { status: 400, headers: corsHeaders });
             }
             const updatedOffer = updateOfferDB(id, body);

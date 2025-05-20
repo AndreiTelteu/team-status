@@ -40,6 +40,7 @@ db.run(`
   );
 `);
 
+// Create offers table if it doesn't exist (without the new columns)
 db.run(`
   CREATE TABLE IF NOT EXISTS offers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,6 +54,34 @@ db.run(`
     FOREIGN KEY (client_id) REFERENCES clients(id)
   );
 `);
+
+// Check if priority column exists in offers table, add it if it doesn't
+try {
+  const priorityColumnExists = db.query(`PRAGMA table_info(offers)`).all()
+    .some(column => column.name === 'priority');
+
+  if (!priorityColumnExists) {
+    console.log("Adding 'priority' column to offers table...");
+    db.run(`ALTER TABLE offers ADD COLUMN priority TEXT;`);
+    console.log("'priority' column added successfully.");
+  }
+} catch (error) {
+  console.error("Error checking/adding 'priority' column:", error);
+}
+
+// Check if estimation column exists in offers table, add it if it doesn't
+try {
+  const estimationColumnExists = db.query(`PRAGMA table_info(offers)`).all()
+    .some(column => column.name === 'estimation');
+
+  if (!estimationColumnExists) {
+    console.log("Adding 'estimation' column to offers table...");
+    db.run(`ALTER TABLE offers ADD COLUMN estimation TEXT;`);
+    console.log("'estimation' column added successfully.");
+  }
+} catch (error) {
+  console.error("Error checking/adding 'estimation' column:", error);
+}
 
 console.log("Database tables checked/created.");
 
@@ -370,7 +399,9 @@ export function getAllOffers() {
         o.description,
         o.request_date as requestDate,
         o.employees_assigned as employeesAssigned,
-        o.status
+        o.status,
+        o.priority,
+        o.estimation
       FROM offers o
       JOIN clients c ON o.client_id = c.id
       ORDER BY o.id DESC;
@@ -384,14 +415,14 @@ export function getAllOffers() {
 
 export function addOfferDB(offer) {
   try {
-    const { clientId, projectName, description, requestDate, employeesAssigned, status } = offer;
+    const { clientId, projectName, description, requestDate, employeesAssigned, status, priority, estimation } = offer;
     const query = db.query(`
-      INSERT INTO offers (client_id, project_name, description, request_date, employees_assigned, status)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO offers (client_id, project_name, description, request_date, employees_assigned, status, priority, estimation)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id, client_id as clientId, project_name as projectName, description,
-                request_date as requestDate, employees_assigned as employeesAssigned, status;
+                request_date as requestDate, employees_assigned as employeesAssigned, status, priority, estimation;
     `);
-    const newOffer = query.get(clientId, projectName, description, requestDate, employeesAssigned, status);
+    const newOffer = query.get(clientId, projectName, description, requestDate, employeesAssigned, status, priority, estimation);
     console.log("Added offer:", newOffer);
     return newOffer;
   } catch (error) {
@@ -402,15 +433,15 @@ export function addOfferDB(offer) {
 
 export function updateOfferDB(id, offer) {
   try {
-    const { clientId, projectName, description, requestDate, employeesAssigned, status } = offer;
+    const { clientId, projectName, description, requestDate, employeesAssigned, status, priority, estimation } = offer;
     const query = db.query(`
       UPDATE offers
-      SET client_id = ?, project_name = ?, description = ?, request_date = ?, employees_assigned = ?, status = ?
+      SET client_id = ?, project_name = ?, description = ?, request_date = ?, employees_assigned = ?, status = ?, priority = ?, estimation = ?
       WHERE id = ?
       RETURNING id, client_id as clientId, project_name as projectName, description,
-                request_date as requestDate, employees_assigned as employeesAssigned, status;
+                request_date as requestDate, employees_assigned as employeesAssigned, status, priority, estimation;
     `);
-    const updatedOffer = query.get(clientId, projectName, description, requestDate, employeesAssigned, status, id);
+    const updatedOffer = query.get(clientId, projectName, description, requestDate, employeesAssigned, status, priority, estimation, id);
     if (!updatedOffer) {
       console.warn(`No offer found with id: ${id}`);
       return null;

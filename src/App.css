@@ -671,6 +671,35 @@ main {
   color: white;
 }
 
+/* Priority Badge */
+.priority-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+.priority-badge.priority-urgent {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.priority-badge.priority-high {
+  background-color: #f39c12;
+  color: white;
+}
+
+.priority-badge.priority-medium {
+  background-color: #3498db;
+  color: white;
+}
+
+.priority-badge.priority-low {
+  background-color: #95a5a6;
+  color: white;
+}
+
 /* Loading Indicator */
 div[role="status"] { /* Style the loading div if needed */
     text-align: center;
