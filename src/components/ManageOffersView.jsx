@@ -18,7 +18,8 @@ function ManageOffersView() {
     employeesAssigned: '[]', // JSON string of employee IDs
     status: 'New', // Default status
     priority: '', // Priority field (urgent, high, medium, low)
-    estimation: '' // Estimation text field
+    estimation: '', // Estimation text field
+    breakdown: '[]' // JSON string of breakdown modules and tasks
   });
 
   // Status options for dropdown
@@ -116,7 +117,8 @@ function ManageOffersView() {
       employeesAssigned: offer.employeesAssigned || '[]',
       status: offer.status,
       priority: offer.priority || '',
-      estimation: offer.estimation || ''
+      estimation: offer.estimation || '',
+      breakdown: offer.breakdown || '[]'
     });
     setShowForm(true); // Always show form when editing
   };
@@ -142,7 +144,8 @@ function ManageOffersView() {
       employeesAssigned: '[]',
       status: 'New',
       priority: '',
-      estimation: ''
+      estimation: '',
+      breakdown: '[]'
     });
     setEditingOfferId(null);
     setShowForm(false); // Hide form when resetting
