@@ -48,9 +48,11 @@ export default function SplashPopup({ onClose }) {
         }}
       >
         <SplashCursor
-          // TRANSPARENT={true}
-          // SPLAT_FORCE={8000}
-          // SPLAT_RADIUS={0.3}
+          SPLAT_RADIUS={0.5}
+          PRESSURE_ITERATIONS={20}
+          VELOCITY_DISSIPATION={0.2}
+          DENSITY_DISSIPATION={2}
+          CURL={1}
         />
       </div>
 
