@@ -390,10 +390,13 @@ function App() {
       <header className="app-header">
         <h1>Daily Status Update</h1>
         <div
-          className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}
+          className="status-badge status-accepted"
+          style={{ marginLeft: 'auto', marginRight: '30px', cursor: 'pointer' }}
           onClick={() => setShowSplashPopup(true)}
-          style={{  cursor: 'pointer' }}
         >
+          Relax Mode
+        </div>
+        <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
           {isConnected ? '● Connected' : '○ Disconnected'}
         </div>
       </header>
