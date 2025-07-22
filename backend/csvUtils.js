@@ -54,23 +54,43 @@ export function generateStatusCSV(statusData, userName) {
 }
 
 /**
- * Converts an array of team status objects to CSV format
+ * Converts an array of team status objects to CSV format with dates as rows and employees as columns
  * @param {Array} statusData - Array of objects with date, status, employeeName, and employeeId properties
  * @returns {Object} - Object with csv content and filename
  */
 export function generateTeamStatusCSV(statusData) {
-  // CSV headers
-  const headers = ['Employee Name', 'Date', 'Status'];
+  // Get unique dates and employees
+  const uniqueDates = [...new Set(statusData.map(item => item.date))];
+  const uniqueEmployees = [...new Set(statusData.map(item => item.employeeName))];
   
-  // Create CSV content
+  // Create a lookup map for quick access to status data
+  const statusMap = new Map();
+  statusData.forEach(item => {
+    const key = `${item.date}-${item.employeeName}`;
+    statusMap.set(key, item.status);
+  });
+  
+  // Create CSV headers: Date followed by employee names
+  const headers = ['Date', ...uniqueEmployees];
+  
+  // Create CSV rows
   const csvRows = [
-    headers.join(','), // Header row
-    ...statusData.map(item => [
-      escapeCsvField(item.employeeName || ''),
-      escapeCsvField(item.date),
-      escapeCsvField(item.status)
-    ].join(','))
+    headers.map(header => escapeCsvField(header)).join(',') // Header row
   ];
+  
+  // Add data rows - one for each date
+  uniqueDates.forEach(date => {
+    const row = [escapeCsvField(date)]; // Start with the date
+    
+    // Add status for each employee on this date
+    uniqueEmployees.forEach(employeeName => {
+      const key = `${date}-${employeeName}`;
+      const status = statusMap.get(key) || ''; // Empty string if no status found
+      row.push(escapeCsvField(status));
+    });
+    
+    csvRows.push(row.join(','));
+  });
   
   const csvContent = csvRows.join('\n');
   
