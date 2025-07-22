@@ -249,6 +249,28 @@ export function getStatusesForUserAndDate(userId, date) {
 }
 
 
+// Gets all status entries for a specific user from the database (for CSV export)
+export function getUserStatusesForExport(userId) {
+  try {
+    const query = db.query(`
+      SELECT s.status_date, s.status_text, e.name as employee_name
+      FROM statuses s
+      JOIN employees e ON s.employee_id = e.id
+      WHERE s.employee_id = ?
+      ORDER BY s.status_date DESC;
+    `);
+    const results = query.all(userId);
+    return results.map(row => ({
+      date: row.status_date,
+      status: row.status_text || '',
+      employeeName: row.employee_name
+    }));
+  } catch (error) {
+    console.error(`Error fetching statuses for user ${userId}:`, error);
+    return [];
+  }
+}
+
 // Saves status to DB AND updates the in-memory cache
 // Modified for live updates: Primarily updates cache, then persists to DB.
 export function saveStatusDB(userId, date, statusText) {

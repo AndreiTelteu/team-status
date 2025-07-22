@@ -148,6 +148,11 @@ export async function getStatuses() {
   return handleFetch(`${API_BASE_URL}/statuses`);
 }
 
+// Export user statuses for CSV download
+export async function exportUserStatuses(userId) {
+  return handleFetch(`${API_BASE_URL}/statuses/export/${userId}`);
+}
+
 // POST /statuses is removed, use WebSocket send instead
 // export async function saveStatus(userId, date, statusText) { ... }
 

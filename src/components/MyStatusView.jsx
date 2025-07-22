@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import StatusInput from './StatusInput';
 import { getPastDates, getTodayDateString } from '../utils/dateUtils';
-import { sendWebSocketMessage } from '../dataService';
+import { sendWebSocketMessage, exportUserStatuses } from '../dataService';
+import { generateStatusCSV, downloadCSV } from '../utils/csvUtils';
+import { showNotification } from '../utils/notification';
 
 function MyStatusView({ userId, userName, statuses, onStatusChange, onLogout }) {
   const today = getTodayDateString();
@@ -23,11 +25,40 @@ function MyStatusView({ userId, userName, statuses, onStatusChange, onLogout }) 
     setEditingStatus(null);
   };
 
+  const handleExportCSV = async () => {
+    try {
+      showNotification('Preparing CSV export...', 'info', 'Export');
+      
+      // Fetch all status data for the user
+      const statusData = await exportUserStatuses(userId);
+      
+      if (!statusData || statusData.length === 0) {
+        showNotification('No status data found to export.', 'warning', 'Export');
+        return;
+      }
+      
+      // Generate CSV content and filename
+      const { content, filename } = generateStatusCSV(statusData, userName);
+      
+      // Trigger download
+      downloadCSV(content, filename);
+      
+      showNotification(`Successfully exported ${statusData.length} status entries!`, 'success', 'Export Complete');
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      showNotification('Failed to export status data. Please try again.', 'error', 'Export Error');
+    }
+  };
+
   return (
     <div className="my-status-view">
       <h2>
         My Status - {userName}
-        <small className='logout'><a href="#" onClick={onLogout}>Logout</a></small>
+        <small className='logout'>
+          <a href="#" onClick={handleExportCSV}>Export CSV</a>
+          &nbsp;|&nbsp;
+          <a href="#" onClick={onLogout}>Logout</a>
+        </small>
       </h2>
       <p>Your changes are saved and broadcast live as you type.</p>
 

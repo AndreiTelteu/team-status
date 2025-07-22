@@ -9,6 +9,7 @@ import {
   getAllStatuses,
   saveStatusDB,
   getStatusesForUserAndDate,
+  getUserStatusesForExport,
   getAllLeavePeriods,
   addLeavePeriodDB,
   updateLeavePeriodDB,
@@ -168,6 +169,23 @@ const server = Bun.serve({
         }
         if (method === "POST") {
             return new Response(JSON.stringify({ error: "Status updates are handled via WebSocket (/ws)" }), { status: 405, headers: corsHeaders });
+        }
+      }
+
+      // --- Status Export API ---
+      const statusExportMatch = route.match(/^\/statuses\/export\/(.+)$/);
+      if (statusExportMatch) {
+        const userId = statusExportMatch[1];
+
+        if (method === "GET") {
+          try {
+            const userStatuses = getUserStatusesForExport(userId);
+            return new Response(JSON.stringify(userStatuses), { headers: corsHeaders });
+          } catch (error) {
+            console.error(`Error exporting statuses for user ${userId}:`, error);
+            return new Response(JSON.stringify({ error: "Failed to export user statuses" }),
+              { status: 500, headers: corsHeaders });
+          }
         }
       }
 
