@@ -10,6 +10,7 @@ import {
   saveStatusDB,
   getStatusesForUserAndDate,
   getUserStatusesForExport,
+  getAllStatusesForExport,
   getAllLeavePeriods,
   addLeavePeriodDB,
   updateLeavePeriodDB,
@@ -19,6 +20,7 @@ import {
   updateOfferDB,
   deleteOfferDB
 } from "./db";
+import { generateStatusCSV, generateTeamStatusCSV } from "./csvUtils.js";
 import { existsSync } from "node:fs"; // Use Node's existsSync
 import path from "node:path"; // Use Node's path module
 
@@ -172,18 +174,67 @@ const server = Bun.serve({
         }
       }
 
-      // --- Status Export API ---
-      const statusExportMatch = route.match(/^\/statuses\/export\/(.+)$/);
-      if (statusExportMatch) {
-        const userId = statusExportMatch[1];
+      // --- Status CSV Export API ---
+      // Team CSV Export
+      if (route === "/statuses/export/team") {
+        if (method === "GET") {
+          try {
+            const teamStatuses = getAllStatusesForExport();
+            
+            if (!teamStatuses || teamStatuses.length === 0) {
+              return new Response(JSON.stringify({ error: "No team status data found" }),
+                { status: 404, headers: corsHeaders });
+            }
+
+            const { content, filename } = generateTeamStatusCSV(teamStatuses);
+            
+            // Return CSV with download headers
+            return new Response(content, {
+              headers: {
+                "Content-Type": "text/csv;charset=utf-8",
+                "Content-Disposition": `attachment; filename="${filename}"`,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+              }
+            });
+          } catch (error) {
+            console.error('Error generating team CSV:', error);
+            return new Response(JSON.stringify({ error: "Failed to generate CSV export" }),
+              { status: 500, headers: corsHeaders });
+          }
+        }
+      }
+      
+      // User CSV Export
+      const userCsvExportMatch = route.match(/^\/statuses\/export\/(.+)$/);
+      if (userCsvExportMatch) {
+        const userId = userCsvExportMatch[1];
 
         if (method === "GET") {
           try {
             const userStatuses = getUserStatusesForExport(userId);
-            return new Response(JSON.stringify(userStatuses), { headers: corsHeaders });
+            
+            if (!userStatuses || userStatuses.length === 0) {
+              return new Response(JSON.stringify({ error: "No status data found for user" }),
+                { status: 404, headers: corsHeaders });
+            }
+
+            // Get user name from the first status entry
+            const userName = userStatuses[0]?.employeeName || 'Unknown';
+            const { content, filename } = generateStatusCSV(userStatuses, userName);
+            
+            // Return CSV with download headers
+            return new Response(content, {
+              headers: {
+                "Content-Type": "text/csv;charset=utf-8",
+                "Content-Disposition": `attachment; filename="${filename}"`,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+              }
+            });
           } catch (error) {
-            console.error(`Error exporting statuses for user ${userId}:`, error);
-            return new Response(JSON.stringify({ error: "Failed to export user statuses" }),
+            console.error(`Error generating CSV for user ${userId}:`, error);
+            return new Response(JSON.stringify({ error: "Failed to generate CSV export" }),
               { status: 500, headers: corsHeaders });
           }
         }

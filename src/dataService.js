@@ -148,9 +148,57 @@ export async function getStatuses() {
   return handleFetch(`${API_BASE_URL}/statuses`);
 }
 
-// Export user statuses for CSV download
-export async function exportUserStatuses(userId) {
-  return handleFetch(`${API_BASE_URL}/statuses/export/${userId}`);
+
+// Download user CSV export as blob
+export async function downloadUserCSV(userId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/statuses/export/${userId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'user-status-export.csv';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    const blob = await response.blob();
+    return { blob, filename };
+  } catch (error) {
+    console.error('Error downloading user CSV:', error);
+    throw error;
+  }
+}
+
+// Download team CSV export as blob
+export async function downloadTeamCSV() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/statuses/export/team`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'team-status-export.csv';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    const blob = await response.blob();
+    return { blob, filename };
+  } catch (error) {
+    console.error('Error downloading team CSV:', error);
+    throw error;
+  }
 }
 
 // POST /statuses is removed, use WebSocket send instead

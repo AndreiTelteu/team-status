@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import StatusInput from './StatusInput';
 import { getPastDates, getTodayDateString } from '../utils/dateUtils';
-import { sendWebSocketMessage, exportUserStatuses } from '../dataService';
-import { generateStatusCSV, downloadCSV } from '../utils/csvUtils';
+import { sendWebSocketMessage, downloadUserCSV } from '../dataService';
+import { downloadBlob } from '../utils/csvUtils';
 import { showNotification } from '../utils/notification';
 
 function MyStatusView({ userId, userName, statuses, onStatusChange, onLogout }) {
@@ -29,21 +29,13 @@ function MyStatusView({ userId, userName, statuses, onStatusChange, onLogout }) 
     try {
       showNotification('Preparing CSV export...', 'info', 'Export');
       
-      // Fetch all status data for the user
-      const statusData = await exportUserStatuses(userId);
-      
-      if (!statusData || statusData.length === 0) {
-        showNotification('No status data found to export.', 'warning', 'Export');
-        return;
-      }
-      
-      // Generate CSV content and filename
-      const { content, filename } = generateStatusCSV(statusData, userName);
+      // Download CSV directly from server
+      const { blob, filename } = await downloadUserCSV(userId);
       
       // Trigger download
-      downloadCSV(content, filename);
+      downloadBlob(blob, filename);
       
-      showNotification(`Successfully exported ${statusData.length} status entries!`, 'success', 'Export Complete');
+      showNotification('Successfully exported status data!', 'success', 'Export Complete');
     } catch (error) {
       console.error('Error exporting CSV:', error);
       showNotification('Failed to export status data. Please try again.', 'error', 'Export Error');

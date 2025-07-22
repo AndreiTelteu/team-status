@@ -255,7 +255,7 @@ export function getUserStatusesForExport(userId) {
     const query = db.query(`
       SELECT s.status_date, s.status_text, e.name as employee_name
       FROM statuses s
-      JOIN employees e ON s.employee_id = e.id
+      LEFT JOIN employees e ON s.employee_id = e.id
       WHERE s.employee_id = ?
       ORDER BY s.status_date DESC;
     `);
@@ -267,6 +267,28 @@ export function getUserStatusesForExport(userId) {
     }));
   } catch (error) {
     console.error(`Error fetching statuses for user ${userId}:`, error);
+    return [];
+  }
+}
+
+// Gets all status entries for all employees from the database (for team CSV export)
+export function getAllStatusesForExport() {
+  try {
+    const query = db.query(`
+      SELECT s.status_date, s.status_text, e.name as employee_name, e.id as employee_id
+      FROM statuses s
+      JOIN employees e ON s.employee_id = e.id
+      ORDER BY s.status_date DESC, e.id ASC;
+    `);
+    const results = query.all();
+    return results.map(row => ({
+      date: row.status_date,
+      status: row.status_text || '',
+      employeeName: row.employee_name,
+      employeeId: row.employee_id
+    }));
+  } catch (error) {
+    console.error('Error fetching all statuses for export:', error);
     return [];
   }
 }
