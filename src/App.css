@@ -221,6 +221,9 @@ main {
   word-break: break-word; /* Break long words */
   min-width: 150px; /* Minimum width for status cells */
 }
+.status-table td.status-cell.on-leave {
+  background: rgb(255 253 177 / 45%);
+}
 
 .status-table td.no-status {
   color: #aaa;

@@ -5,7 +5,7 @@ import { downloadTeamCSV } from '../dataService';
 import { downloadBlob } from '../utils/csvUtils';
 import { showNotification } from '../utils/notification';
 
-function StatusTableView({ statuses, employees, selectedUserId }) {
+function StatusTableView({ statuses, employees, leavePeriods, selectedUserId }) {
   // Ensure employees is always an array to prevent errors during loading/initial state
   const validEmployees = Array.isArray(employees) ? employees : [];
   const dates = getPastDates(5); // Today + past 4 days
@@ -40,7 +40,7 @@ function StatusTableView({ statuses, employees, selectedUserId }) {
        ) : Object.keys(statuses).length === 0 ? (
             <p>Waiting for status updates...</p>
        ) : (
-           <StatusTable statuses={statuses} employees={validEmployees} dates={dates} selectedUserId={selectedUserId} />
+           <StatusTable statuses={statuses} employees={validEmployees} leavePeriods={leavePeriods} dates={dates} selectedUserId={selectedUserId} />
        )}
     </div>
   );

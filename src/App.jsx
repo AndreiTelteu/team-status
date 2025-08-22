@@ -442,6 +442,7 @@ function App() {
               <StatusTableView
                 statuses={statuses}
                 employees={employees}
+                leavePeriods={leavePeriods}
                 selectedUserId={selectedUserId}
               />
             )}

@@ -1,10 +1,20 @@
 import React, { Fragment } from 'react';
 import { getTodayDateString } from '../utils/dateUtils';
 
-function StatusTable({ statuses, employees, dates, selectedUserId }) {
+function StatusTable({ statuses, employees, leavePeriods, dates, selectedUserId }) {
   const todayDateString = getTodayDateString();
-  // Ensure employees is an array
+  // Ensure employees and leavePeriods are arrays
   const validEmployees = Array.isArray(employees) ? employees : [];
+  const validLeavePeriods = Array.isArray(leavePeriods) ? leavePeriods : [];
+
+  // Helper function to check if an employee is on leave for a specific date
+  const isEmployeeOnLeave = (employeeId, date) => {
+    return validLeavePeriods.some(leavePeriod => {
+      return leavePeriod.employeeId === employeeId &&
+             date >= leavePeriod.fromDate &&
+             date <= leavePeriod.untilDate;
+    });
+  };
 
   return (
     <div className="status-table-container">
@@ -37,6 +47,20 @@ function StatusTable({ statuses, employees, dates, selectedUserId }) {
                 {employee.name}
               </td>
               {dates.map(date => {
+                // Check if employee is on leave for this date
+                const onLeave = isEmployeeOnLeave(employee.id, date);
+                
+                if (onLeave) {
+                  return (
+                    <td
+                      key={`${employee.id}-${date}`}
+                      className="status-cell on-leave"
+                    >
+                      <span>{`🏝️ 🍹 Vacanță ⛱️`}</span>
+                    </td>
+                  );
+                }
+
                 // Get status text safely, checking if user and date exist
                 const statusText = statuses[employee.id]?.[date];
                 const hasStatus = typeof statusText === 'string' && statusText !== ''; // Check if status exists and is not empty
