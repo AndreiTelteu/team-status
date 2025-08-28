@@ -771,34 +771,104 @@ div[role="status"] { /* Style the loading div if needed */
 }
 
 .module-header {
+  margin-bottom: 8px;
+}
+
+.module-info-line {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  transition: border-color 0.2s;
+}
+
+.module-info-line:hover {
+  border-color: #3498db;
 }
 
 .module-name-input {
   flex: 1;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 0.95em;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 0.9em;
+  background-color: white;
+  min-width: 120px;
+}
+
+.module-name-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.estimation-label {
+  font-size: 0.8em;
+  font-weight: 500;
+  color: #6c757d;
+  min-width: 22px;
+}
+
+.module-estimation-input {
+  width: 85px !important;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 0.85em;
+  text-align: center;
+  background-color: white;
+  font-family: 'Courier New', monospace;
+}
+
+.module-estimation-input.readonly {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  font-weight: 500;
+}
+
+.module-estimation-input.readonly:focus {
+  outline: none;
+  border-color: #e9ecef;
+  box-shadow: none;
+}
+
+.module-estimation-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.module-estimation-input::placeholder {
+  color: #adb5bd;
+  font-size: 0.8em;
 }
 
 .remove-module-btn {
-  padding: 4px 8px;
+  padding: 3px 6px;
   background-color: #e74c3c;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: 0.85em;
   line-height: 1;
+  transition: all 0.2s;
+  min-width: 20px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .remove-module-btn:hover {
   background-color: #c0392b;
+  transform: scale(1.05);
 }
 
 .tasks-container {
@@ -808,29 +878,65 @@ div[role="status"] { /* Style the loading div if needed */
 .task-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  padding: 4px;
-  background-color: #f8f9fa;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding: 6px 8px;
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
   border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.task-item:hover {
+  border-color: #ced4da;
 }
 
 .tasks-container .task-item .task-name-input {
   flex-grow: 1;
-  padding: 4px 6px;
+  padding: 3px 5px;
   border: 1px solid #ddd;
   border-radius: 3px;
-  font-size: 0.9em;
+  font-size: 0.85em;
+  background-color: #fafafa;
+  min-width: 100px;
+}
+
+.tasks-container .task-item .task-name-input:focus {
+  outline: none;
+  border-color: #3498db;
+  background-color: white;
+  box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.1);
+}
+
+.task-est-label {
+  font-size: 0.75em;
+  color: #868e96;
+  font-weight: 500;
+  min-width: 18px;
 }
 
 .tasks-container .task-item .task-estimation-input {
   width: 60px;
   flex-shrink: 0;
-  padding: 4px 6px;
+  padding: 3px 5px;
   border: 1px solid #ddd;
   border-radius: 3px;
-  font-size: 0.9em;
+  font-size: 0.8em;
   text-align: center;
+  background-color: #fafafa;
+  font-family: 'Courier New', monospace;
+}
+
+.tasks-container .task-item .task-estimation-input:focus {
+  outline: none;
+  border-color: #3498db;
+  background-color: white;
+  box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.1);
+}
+
+.tasks-container .task-item .task-estimation-input::placeholder {
+  color: #adb5bd;
+  font-size: 0.75em;
 }
 
 .remove-task-btn {
@@ -872,5 +978,108 @@ div[role="status"] { /* Style the loading div if needed */
   .form-column-left,
   .form-column-right {
     flex: 1;
+  }
+}
+
+/* Estimation field enhancements */
+.estimation-field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.estimation-field-container input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.estimation-field-container input.auto-calculated {
+  background-color: #e8f5e8;
+  border-color: #2ecc71;
+}
+
+.estimation-field-container input.manual {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+}
+
+.reset-auto-calc-btn {
+  padding: 6px 12px;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.reset-auto-calc-btn:hover {
+  background-color: #138496;
+}
+
+.auto-calc-info {
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Time format validation styles */
+.task-estimation-input.invalid,
+.module-estimation-input.invalid {
+  border-color: #e74c3c;
+  background-color: #fdf2f2;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
+}
+
+.task-estimation-input.valid,
+.module-estimation-input.valid {
+  border-color: #2ecc71;
+  background-color: #f1f8f1;
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.1);
+}
+
+.module-info-line:has(.module-estimation-input.valid) {
+  border-color: #2ecc71;
+}
+
+.module-info-line:has(.module-estimation-input.invalid) {
+  border-color: #e74c3c;
+}
+
+/* Tooltip styles for time format hints */
+.task-estimation-input[title]:hover::after,
+.module-estimation-input[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 5px;
+}
+
+/* Responsive adjustments for estimation field */
+@media (max-width: 768px) {
+  .estimation-field-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .estimation-field-container input {
+    min-width: auto;
+  }
+  
+  .reset-auto-calc-btn {
+    align-self: flex-start;
   }
 }

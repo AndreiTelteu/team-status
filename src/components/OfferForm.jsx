@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import {
+  parseTimeString,
+  formatMinutesToReadable,
+  validateTimeFormat,
+  calculateTotalEstimation,
+  createDefaultModules,
+  getTimeFormatHint,
+  getValidationError
+} from '../utils/timeParser.js';
 
 function OfferForm({
   formData,
@@ -26,12 +35,24 @@ function OfferForm({
   // Breakdown state management
   const [breakdown, setBreakdown] = useState(() => {
     try {
-      return JSON.parse(formData.breakdown || '[]');
+      const parsed = JSON.parse(formData.breakdown || '[]');
+      // If breakdown is empty and we're not editing, create default modules
+      if (parsed.length === 0 && !isEditing) {
+        return createDefaultModules();
+      }
+      return parsed;
     } catch (error) {
       console.error('Error parsing breakdown:', error);
-      return [];
+      return isEditing ? [] : createDefaultModules();
     }
   });
+
+  // Auto-calculated total estimation from breakdown
+  const [autoCalculatedEstimation, setAutoCalculatedEstimation] = useState('');
+  const [isEstimationAutoCalculated, setIsEstimationAutoCalculated] = useState(true);
+  
+  // Validation state for time inputs
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Update selectedEmployees when formData.employeesAssigned changes
   useEffect(() => {
@@ -55,9 +76,30 @@ function OfferForm({
     }
   }, [formData.breakdown]);
 
+  // Auto-calculate total estimation whenever breakdown changes
+  useEffect(() => {
+    const totalMinutes = calculateTotalEstimation(breakdown);
+    const formattedTotal = formatMinutesToReadable(totalMinutes);
+    setAutoCalculatedEstimation(formattedTotal);
+    
+    // Only auto-update the main estimation field if it's currently auto-calculated
+    if (isEstimationAutoCalculated && formattedTotal !== formData.estimation) {
+      setFormData(prev => ({
+        ...prev,
+        estimation: formattedTotal
+      }));
+    }
+  }, [breakdown, isEstimationAutoCalculated, setFormData]);
+
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // If user manually changes estimation, disable auto-calculation
+    if (name === 'estimation') {
+      setIsEstimationAutoCalculated(false);
+    }
+    
     setFormData({
       ...formData,
       [name]: value
@@ -126,6 +168,36 @@ function OfferForm({
     });
   };
 
+  // Calculate module estimation from its tasks
+  const calculateModuleEstimation = (moduleIndex) => {
+    const module = breakdown[moduleIndex];
+    if (!module || !module.tasks || module.tasks.length === 0) {
+      return '';
+    }
+    
+    let totalMinutes = 0;
+    module.tasks.forEach(task => {
+      if (task.estimation) {
+        totalMinutes += parseTimeString(task.estimation);
+      }
+    });
+    
+    return totalMinutes > 0 ? formatMinutesToReadable(totalMinutes) : '';
+  };
+
+  const updateModuleEstimation = (moduleIndex, newEstimation) => {
+    // Module estimation is now readonly and auto-calculated
+    // This function is kept for backward compatibility but doesn't update estimation
+    const updatedBreakdown = breakdown.map((module, index) =>
+      index === moduleIndex ? { ...module } : module
+    );
+    setBreakdown(updatedBreakdown);
+    setFormData({
+      ...formData,
+      breakdown: JSON.stringify(updatedBreakdown)
+    });
+  };
+
   const addTask = (moduleIndex) => {
     const newTask = {
       name: "",
@@ -157,6 +229,24 @@ function OfferForm({
   };
 
   const updateTask = (moduleIndex, taskIndex, field, value) => {
+    // If updating estimation field, validate the input
+    if (field === 'estimation') {
+      const isValid = validateTimeFormat(value);
+      const errorKey = `task-${moduleIndex}-${taskIndex}`;
+      
+      setValidationErrors(prev => {
+        if (isValid || value === '') {
+          const { [errorKey]: removed, ...rest } = prev;
+          return rest;
+        } else {
+          return {
+            ...prev,
+            [errorKey]: getValidationError(value)
+          };
+        }
+      });
+    }
+    
     const updatedBreakdown = breakdown.map((module, index) =>
       index === moduleIndex
         ? {
@@ -172,6 +262,23 @@ function OfferForm({
       ...formData,
       breakdown: JSON.stringify(updatedBreakdown)
     });
+  };
+
+  // Reset estimation to auto-calculated mode
+  const resetToAutoCalculated = () => {
+    setIsEstimationAutoCalculated(true);
+    setFormData(prev => ({
+      ...prev,
+      estimation: autoCalculatedEstimation
+    }));
+  };
+
+  // Helper function to get validation class for inputs
+  const getValidationClass = (errorKey, value) => {
+    if (!value || value === '') return '';
+    if (validationErrors[errorKey]) return 'invalid';
+    if (validateTimeFormat(value)) return 'valid';
+    return '';
   };
 
   // Handle form submission
@@ -256,20 +363,32 @@ function OfferForm({
               {breakdown.map((module, moduleIndex) => (
                 <div key={moduleIndex} className="module-item">
                   <div className="module-header">
-                    <input
-                      type="text"
-                      value={module.name}
-                      onChange={(e) => updateModuleName(moduleIndex, e.target.value)}
-                      className="module-name-input"
-                      placeholder="Module name"
-                    />
-                    <button
-                      type="button"
-                      className="remove-module-btn"
-                      onClick={() => removeModule(moduleIndex)}
-                    >
-                      ×
-                    </button>
+                    <div className="module-info-line">
+                      <input
+                        type="text"
+                        value={module.name}
+                        onChange={(e) => updateModuleName(moduleIndex, e.target.value)}
+                        className="module-name-input"
+                        placeholder="Module name"
+                      />
+                      <span className="estimation-label">Est:</span>
+                      <input
+                        type="text"
+                        value={calculateModuleEstimation(moduleIndex)}
+                        className="module-estimation-input readonly"
+                        placeholder="Auto"
+                        readOnly
+                        title="Auto-calculated from module tasks"
+                      />
+                      <button
+                        type="button"
+                        className="remove-module-btn"
+                        onClick={() => removeModule(moduleIndex)}
+                        title="Remove module"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                   <div className="tasks-container">
                     {module.tasks.map((task, taskIndex) => (
@@ -281,12 +400,14 @@ function OfferForm({
                           className="task-name-input"
                           placeholder="Task name"
                         />
+                        <span className="task-est-label">est:</span>
                         <input
                           type="text"
                           value={task.estimation}
                           onChange={(e) => updateTask(moduleIndex, taskIndex, 'estimation', e.target.value)}
-                          className="task-estimation-input"
-                          placeholder="est. h"
+                          className={`task-estimation-input ${getValidationClass(`task-${moduleIndex}-${taskIndex}`, task.estimation)}`}
+                          placeholder="1d 4h"
+                          title={validationErrors[`task-${moduleIndex}-${taskIndex}`] || `Task estimation (${getTimeFormatHint()})`}
                         />
                         <button
                           type="button"
@@ -378,14 +499,36 @@ function OfferForm({
 
       <div className="form-group">
         <label htmlFor="estimation">Estimation:</label>
-        <input
-          type="text"
-          id="estimation"
-          name="estimation"
-          value={formData.estimation || ''}
-          onChange={handleChange}
-          placeholder="e.g., 2 weeks, 5 days, etc."
-        />
+        <div className="estimation-field-container">
+          <input
+            type="text"
+            id="estimation"
+            name="estimation"
+            value={formData.estimation || ''}
+            onChange={handleChange}
+            placeholder={getTimeFormatHint()}
+            className={isEstimationAutoCalculated ? 'auto-calculated' : 'manual'}
+            title={isEstimationAutoCalculated ? 
+              `Auto-calculated: ${autoCalculatedEstimation}` : 
+              'Manually entered estimation'
+            }
+          />
+          {!isEstimationAutoCalculated && autoCalculatedEstimation && (
+            <button
+              type="button"
+              className="reset-auto-calc-btn"
+              onClick={resetToAutoCalculated}
+              title={`Reset to auto-calculated: ${autoCalculatedEstimation}`}
+            >
+              ↻ Auto: {autoCalculatedEstimation}
+            </button>
+          )}
+        </div>
+        {isEstimationAutoCalculated && autoCalculatedEstimation && (
+          <small className="auto-calc-info">
+            Auto-calculated from breakdown ({autoCalculatedEstimation})
+          </small>
+        )}
       </div>
 
       <div className="form-actions">
