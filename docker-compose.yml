@@ -4,6 +4,24 @@ services:
     build: .
     ports:
       - "3526:3000" # Map host port 3000 to container port 3000
+    environment:
+      # AI Service Configuration
+      - AI_MODEL_PROVIDER=${AI_MODEL_PROVIDER}
+      - AI_MODEL_NAME=${AI_MODEL_NAME}
+      - AI_MODEL_BASE_URL=${AI_MODEL_BASE_URL}
+      - AI_TEMPERATURE=${AI_TEMPERATURE}
+      - AI_MAX_TOKENS=${AI_MAX_TOKENS}
+      # API Keys
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # AI Estimation Settings
+      - AI_TESTING_PERCENTAGE=${AI_TESTING_PERCENTAGE}
+      - AI_BUGFIXING_PERCENTAGE=${AI_BUGFIXING_PERCENTAGE}
+      - AI_DEFAULT_WORKDAY_HOURS=${AI_DEFAULT_WORKDAY_HOURS}
+      # System Environment
+      - NODE_ENV=${NODE_ENV}
+    env_file:
+      - .env
     volumes:
       # Mount the SQLite database file from the host into the container
       # This ensures data persistence across container restarts.
