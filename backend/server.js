@@ -1,4 +1,22 @@
 // @ts-check
+
+// Load environment variables from .env file
+// Bun automatically loads .env files, but we can ensure it's loaded from the correct location
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+
+// Ensure .env is loaded from the project root
+const envPath = join(import.meta.dir, "../.env");
+if (existsSync(envPath)) {
+  // Bun loads .env automatically, but we can verify it exists
+  console.log("Found .env file at:", envPath);
+  console.log("AI Provider:", process.env.AI_MODEL_PROVIDER);
+  console.log("AI Model:", process.env.AI_MODEL_NAME);
+  console.log("OpenRouter Key:", process.env.OPENROUTER_API_KEY ? "Set" : "Missing");
+} else {
+  console.warn("No .env file found at:", envPath);
+}
+
 import {
   getAllEmployees,
   addEmployeeDB,
@@ -21,7 +39,7 @@ import {
   deleteOfferDB
 } from "./db";
 import { generateStatusCSV, generateTeamStatusCSV } from "./csvUtils.js";
-import { existsSync } from "node:fs"; // Use Node's existsSync
+import breakdownService, { generateProjectBreakdown, testAIService } from "./aiService.js";
 import path from "node:path"; // Use Node's path module
 
 const PORT = 3000;
@@ -391,6 +409,65 @@ const server = Bun.serve({
           } else {
             return new Response(JSON.stringify({ error: "Offer not found or delete failed" }),
               { status: 404, headers: corsHeaders });
+          }
+        }
+      }
+
+      // --- AI Breakdown Generation API ---
+      if (route === "/ai/generate-breakdown") {
+        if (method === "POST") {
+          try {
+            const body = await req.json();
+            const { projectDescription, clientName, employeeNames, additionalContext } = body;
+            
+            if (!projectDescription || typeof projectDescription !== 'string' || projectDescription.trim().length < 10) {
+              return new Response(JSON.stringify({ 
+                success: false, 
+                error: "Project description is required and must be at least 10 characters long" 
+              }), { status: 400, headers: corsHeaders });
+            }
+            
+            console.log('Generating AI breakdown for project:', projectDescription.substring(0, 100) + '...');
+            
+            const result = await generateProjectBreakdown({
+              projectDescription: projectDescription.trim(),
+              clientName: clientName || '',
+              employeeNames: Array.isArray(employeeNames) ? employeeNames : [],
+              additionalContext: additionalContext || ''
+            });
+            
+            return new Response(JSON.stringify(result), { 
+              status: result.success ? 200 : 500, 
+              headers: corsHeaders 
+            });
+          } catch (error) {
+            console.error('Error in AI breakdown generation:', error);
+            return new Response(JSON.stringify({ 
+              success: false, 
+              error: "Internal server error during breakdown generation",
+              details: error.message 
+            }), { status: 500, headers: corsHeaders });
+          }
+        }
+      }
+      
+      // --- AI Service Test API ---
+      if (route === "/ai/test") {
+        if (method === "GET") {
+          try {
+            console.log('Testing AI service...');
+            const isWorking = await testAIService();
+            return new Response(JSON.stringify({ 
+              success: isWorking, 
+              message: isWorking ? 'AI service is working correctly' : 'AI service test failed'
+            }), { headers: corsHeaders });
+          } catch (error) {
+            console.error('Error testing AI service:', error);
+            return new Response(JSON.stringify({ 
+              success: false, 
+              error: "Failed to test AI service",
+              details: error.message 
+            }), { status: 500, headers: corsHeaders });
           }
         }
       }

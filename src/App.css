@@ -753,6 +753,172 @@ div[role="status"] { /* Style the loading div if needed */
   background-color: #27ae60;
 }
 
+/* AI GEN Button and Breakdown Controls */
+.breakdown-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.btn-ai-gen {
+  margin-right: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.9em;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.btn-ai-gen:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.btn-ai-gen:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+}
+
+.btn-ai-gen.loading {
+  background: linear-gradient(135deg, #9bb5ff 0%, #a788c7 100%);
+  cursor: not-allowed;
+}
+
+.btn-ai-gen.loading:hover {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.ai-icon {
+  font-size: 1.1em;
+  animation: sparkle 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes sparkle {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% { 
+    transform: scale(1.05) rotate(90deg);
+    filter: brightness(1.2);
+  }
+  50% { 
+    transform: scale(1.1) rotate(180deg);
+    filter: brightness(1.4);
+  }
+  75% { 
+    transform: scale(1.05) rotate(270deg);
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Message Styling */
+.error-message {
+  background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  box-shadow: 0 2px 4px rgba(204, 51, 51, 0.1);
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(231, 76, 60, 0.2);
+}
+
+.retry-btn:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+}
+
+/* Enhanced breakdown header for better layout */
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.breakdown-header label {
+  margin-bottom: 0;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .breakdown-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .btn-ai-gen,
+  .add-module-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .breakdown-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .error-message {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
 .breakdown-container {
   max-height: 400px;
   overflow-y: auto;

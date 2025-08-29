@@ -9,6 +9,7 @@ import {
   getTimeFormatHint,
   getValidationError
 } from '../utils/timeParser.js';
+import { BreakdownGeneratorService } from '../services/breakdownGenerator.js';
 
 function OfferForm({
   formData,
@@ -23,6 +24,12 @@ function OfferForm({
   // Priority options for dropdown
   const priorityOptions = ['urgent', 'high', 'medium', 'low'];
   const editorRef = useRef(null);
+  
+  // AI generation state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState(null);
+  const breakdownGenerator = new BreakdownGeneratorService();
+  
   const [selectedEmployees, setSelectedEmployees] = useState(() => {
     try {
       return JSON.parse(formData.employeesAssigned || '[]');
@@ -166,6 +173,42 @@ function OfferForm({
       ...formData,
       breakdown: JSON.stringify(updatedBreakdown)
     });
+  };
+
+  // AI Generation function
+  const handleAIGeneration = async () => {
+    if (!formData.description?.trim()) {
+      alert('Please enter a project description first');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      const clientName = clients.find(c => c.id === formData.clientId)?.name || '';
+      const employeeNames = selectedEmployees.map(id => 
+        employees.find(e => e.id === id)?.name
+      ).filter(Boolean);
+
+      const generatedBreakdown = await breakdownGenerator.generateBreakdown(
+        formData.description,
+        clientName,
+        employeeNames
+      );
+
+      // Update breakdown state
+      setBreakdown(generatedBreakdown);
+      setFormData(prev => ({
+        ...prev,
+        breakdown: JSON.stringify(generatedBreakdown)
+      }));
+
+    } catch (error) {
+      setGenerationError(error.message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Calculate module estimation from its tasks
@@ -355,10 +398,48 @@ function OfferForm({
           <div className="form-group">
             <div className="breakdown-header">
               <label>Project Breakdown:</label>
-              <button type="button" className="add-module-btn" onClick={addModule}>
-                + Add Module
-              </button>
+              <div className="breakdown-controls">
+                <button
+                  type="button"
+                  className="add-module-btn"
+                  onClick={addModule}
+                  disabled={isGenerating}
+                >
+                  + Add Module
+                </button>
+                <button
+                  type="button"
+                  className={`btn-ai-gen ${isGenerating ? 'loading' : ''}`}
+                  onClick={handleAIGeneration}
+                  disabled={isGenerating || !formData.description?.trim()}
+                >
+                  {isGenerating ? (
+                    <>
+                      <span className="spinner"></span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <span className="ai-icon">✨</span>
+                      AI GEN
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+            
+            {generationError && (
+              <div className="error-message">
+                {generationError}
+                <button 
+                  type="button" 
+                  className="retry-btn"
+                  onClick={handleAIGeneration}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
             <div className="breakdown-container">
               {breakdown.map((module, moduleIndex) => (
                 <div key={moduleIndex} className="module-item">
